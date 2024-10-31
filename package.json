@@ -6,6 +6,7 @@
   "author": "DarkHole1",
   "license": "MIT",
   "dependencies": {
+    "@grammyjs/router": "^2.0.0",
     "@iarna/toml": "^2.2.5",
     "@typegoose/typegoose": "^12.8.0",
     "@types/node": "^22.8.5",
