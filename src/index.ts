@@ -6,6 +6,8 @@ import { Router } from '@grammyjs/router'
 type SessionData = {
     state:
         | 'start'
+        | 'create-start-date'
+        | 'create-select-date'
         | 'create-rules'
         | 'create-restrictions'
         | 'create-additional-options'
@@ -22,10 +24,20 @@ bot.command('start', (ctx) => ctx.reply('Welcome'))
 
 bot.command('new', async (ctx) => {
     await ctx.reply('New santa')
-    ctx.session.state = 'create-rules'
+    ctx.session.state = 'create-start-date'
 })
 
 const router = new Router<MyContext>((ctx) => ctx.session.state)
+
+router.route('create-start-date').on('message', async (ctx) => {
+    await ctx.reply('Теперь выберите дату до которой нужно выбрать тайтл')
+    ctx.session.state = 'create-select-date'
+})
+
+router.route('create-select-date').on('message', async (ctx) => {
+    await ctx.reply('Правила')
+    ctx.session.state = 'create-rules'
+})
 
 router.route('create-rules').on('message', async (ctx) => {
     await ctx.reply('Теперь добавьте ограничения на выбранный тайтл')
