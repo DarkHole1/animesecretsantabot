@@ -2,7 +2,7 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import * as text from './text';
+import * as text from './text'
 
 type SessionData = {
     state:
@@ -65,38 +65,27 @@ router.route('create-restrictions').on('message', async (ctx) => {
 })
 
 router.route('create-additional-options').on('message', async (ctx) => {
-    await ctx.reply(
-        text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`)
-    )
+    await ctx.reply(text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`))
     ctx.session.state = 'start'
 })
 
 router.route('participate-info').on('message', async (ctx) => {
-    await ctx.reply('Пара настроек')
+    await ctx.reply(text.PARTICIPATE_OPTIONS_MSG)
     ctx.session.state = 'participate-options'
 })
 
 router.route('participate-options').on('message', async (ctx) => {
-    await ctx.reply('Вы отправили заявку, дождитесь одобрения администратором')
-    ctx.session.state = 'start'
-})
-
-router.route('create-additional-options').on('message', async (ctx) => {
-    await ctx.reply(
-        'Вы успешно создали новую Санту! Не забывайте одобрять участников'
-    )
+    await ctx.reply(text.PARTICIPATE_SENT_MSG)
     ctx.session.state = 'start'
 })
 
 router.route('participate-select-title').on('message', async (ctx) => {
-    await ctx.reply(
-        'Вы выбрали тайтл. Когда настанет час он отправится вашему подопечному :3'
-    )
+    await ctx.reply(text.PARTICIPATE_SELECT_TITLE_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
 
 router.route('participate-write-review').on('message', async (ctx) => {
-    await ctx.reply('Вы написали ревью!')
+    await ctx.reply(text.PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
 

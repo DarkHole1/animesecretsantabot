@@ -38,5 +38,17 @@ export const CREATE_RESTRICTIONS_FAILURE_MSG = `Не удалось распоз
 
 export const CREATE_OPTIONS_MSG = `Завершающие штрихи. Можете добавить пару опций для вашего мероприятия или просто перейти дальше через /next.`
 
+export const PARTICIPATE_OPTIONS_MSG = `Завершающие штрихи. Можете добавить пару опций для вашей заявки.`
+
+export const PARTICIPATE_SENT_MSG = `Вы успешно отправили заявку! Осталось дождаться её одобрения создателем...`
+
+export const PARTICIPATE_SELECT_TITLE_MSG = (user: string) => `Ваш подопечный: ${user}, пожалуйста, отправьте в ответ ссылку на загаданный вами тайтл.`
+
+export const PARTICIPATE_SELECT_TITLE_SUCCESS_MSG = `Вы успешно выбрали тайтл! Когда настанет час он отправится вашему подопечному :3`
+
+export const PARTICIPATE_WRITE_REVIEW_MSG = (link: string) => `Ваш тайтл: ${link}. Приятного просмотра! Не забудьте написать отзыв на него.`
+
+export const PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG = `Вы успешно написали отзыв :3`
+
 export const CREATE_FINISH_MSG = (link: string) =>
     `Ура! У вас получилось. Ссылка для присоединения ${link}.`
