@@ -2,6 +2,7 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
+import * as text from './text';
 
 type SessionData = {
     state:
@@ -27,45 +28,45 @@ const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
 
 bot.command('start', async (ctx) => {
-    await ctx.reply('Welcome')
+    await ctx.reply(text.WELCOME_MSG)
     ctx.session.state = 'participate-info'
 })
 
 bot.command('new', async (ctx) => {
-    await ctx.reply('New santa')
+    await ctx.reply(text.CREATE_START_DATE_MSG)
     ctx.session.state = 'create-start-date'
 })
 
 const router = new Router<MyContext>((ctx) => ctx.session.state)
 
 router.route('create-start-date').on('message', async (ctx) => {
-    await ctx.reply('Теперь выберите дату до которой нужно выбрать тайтл')
+    await ctx.reply(text.CREATE_SELECT_DATE_MSG)
     ctx.session.state = 'create-select-date'
 })
 
 router.route('create-select-date').on('message', async (ctx) => {
-    await ctx.reply('Дедлайн')
+    await ctx.reply(text.CREATE_DEADLINE_DATE_MSG)
     ctx.session.state = 'create-deadline-date'
 })
 
 router.route('create-select-date').on('message', async (ctx) => {
-    await ctx.reply('Правила')
+    await ctx.reply(text.CREATE_RULES_MSG)
     ctx.session.state = 'create-rules'
 })
 
 router.route('create-rules').on('message', async (ctx) => {
-    await ctx.reply('Теперь добавьте ограничения на выбранный тайтл')
+    await ctx.reply(text.CREATE_RESTRICTIONS_MSG)
     ctx.session.state = 'create-restrictions'
 })
 
 router.route('create-restrictions').on('message', async (ctx) => {
-    await ctx.reply('Отлично! Осталось немного дополнительных опций...')
+    await ctx.reply(text.CREATE_OPTIONS_MSG)
     ctx.session.state = 'create-additional-options'
 })
 
 router.route('create-additional-options').on('message', async (ctx) => {
     await ctx.reply(
-        'Вы успешно создали новую Санту! Не забывайте одобрять участников'
+        text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`)
     )
     ctx.session.state = 'start'
 })
