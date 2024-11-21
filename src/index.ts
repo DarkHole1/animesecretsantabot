@@ -56,12 +56,26 @@ router.route('create-start-date').on('message:text', async (ctx) => {
     ctx.session.state = 'create-select-date'
 })
 
-router.route('create-select-date').on('message', async (ctx) => {
+router.route('create-select-date').on('message:text', async (ctx) => {
+    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    if (isNaN(res.valueOf())) {
+        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        return
+    }
+    // TODO: Add check for difference from select date
+    // TODO: Save in session
     await ctx.reply(text.CREATE_DEADLINE_DATE_MSG)
     ctx.session.state = 'create-deadline-date'
 })
 
-router.route('create-select-date').on('message', async (ctx) => {
+router.route('create-deadline-date').on('message:text', async (ctx) => {
+    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    if (isNaN(res.valueOf())) {
+        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        return
+    }
+    // TODO: Add check for difference from select date
+    // TODO: Save in session
     await ctx.reply(text.CREATE_RULES_MSG)
     ctx.session.state = 'create-rules'
 })
