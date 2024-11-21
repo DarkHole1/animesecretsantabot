@@ -4,7 +4,7 @@ import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
 import { differenceInDays, parse } from 'date-fns'
-import { parseRestrictions } from './restrictions'
+import { parseRestrictions, Restriction } from './restrictions'
 
 type SessionData = {
     state:
@@ -20,6 +20,12 @@ type SessionData = {
         | 'participate-options'
         | 'participate-select-title'
         | 'participate-write-review'
+    startDate?: Date
+    selectDate?: Date
+    deadlineDate?: Date
+    rulesId?: number
+    restrictions?: Restriction[]
+    options?: Map<string, boolean>
 }
 
 type MyContext = Context & SessionFlavor<SessionData>
@@ -52,8 +58,8 @@ router.route('create-start-date').on('message:text', async (ctx) => {
         await ctx.reply(text.DATE_INVALID_ERROR_MSG)
         return
     }
-    // TODO: Save in session
     await ctx.reply(text.CREATE_SELECT_DATE_MSG)
+    ctx.session.startDate = res
     ctx.session.state = 'create-select-date'
 })
 
@@ -64,8 +70,8 @@ router.route('create-select-date').on('message:text', async (ctx) => {
         return
     }
     // TODO: Add check for difference from select date
-    // TODO: Save in session
     await ctx.reply(text.CREATE_DEADLINE_DATE_MSG)
+    ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
 })
 
@@ -76,15 +82,15 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
         return
     }
     // TODO: Add check for difference from select date
-    // TODO: Save in session
     await ctx.reply(text.CREATE_RULES_MSG)
+    ctx.session.deadlineDate = res
     ctx.session.state = 'create-rules'
 })
 
 router.route('create-rules').on('message:text', async (ctx) => {
     const rulesId = ctx.msg.message_id
-    // TODO: Save in session
     await ctx.reply(text.CREATE_RESTRICTIONS_MSG)
+    ctx.session.rulesId = rulesId
     ctx.session.state = 'create-restrictions'
 })
 
@@ -94,13 +100,14 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
         await ctx.reply(text.CREATE_RESTRICTIONS_FAILURE_MSG)
         return
     }
-    // TODO: Save in session
     await ctx.reply(text.CREATE_OPTIONS_MSG)
+    ctx.session.restrictions = restrictions
     ctx.session.state = 'create-additional-options'
 })
 
 router.route('create-additional-options').on('message:text', async (ctx) => {
     // TODO: Add parsing options
+    ctx.session.options = new Map()
     // TODO: Add database saving
     await ctx.reply(text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`))
     ctx.session.state = 'start'
