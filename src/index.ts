@@ -99,7 +99,9 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
     ctx.session.state = 'create-additional-options'
 })
 
-router.route('create-additional-options').on('message', async (ctx) => {
+router.route('create-additional-options').on('message:text', async (ctx) => {
+    // TODO: Add parsing options
+    // TODO: Add database saving
     await ctx.reply(text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`))
     ctx.session.state = 'start'
 })
