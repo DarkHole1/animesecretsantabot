@@ -4,6 +4,7 @@ import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
 import { differenceInDays, parse } from 'date-fns'
+import { parseRestrictions } from './restrictions'
 
 type SessionData = {
     state:
@@ -81,13 +82,19 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
 })
 
 router.route('create-rules').on('message:text', async (ctx) => {
-    const rulesId = ctx.msg.message_id;
+    const rulesId = ctx.msg.message_id
     // TODO: Save in session
     await ctx.reply(text.CREATE_RESTRICTIONS_MSG)
     ctx.session.state = 'create-restrictions'
 })
 
-router.route('create-restrictions').on('message', async (ctx) => {
+router.route('create-restrictions').on('message:text', async (ctx) => {
+    const restrictions = parseRestrictions(ctx.msg.text)
+    if (!restrictions) {
+        await ctx.reply(text.CREATE_RESTRICTIONS_FAILURE_MSG)
+        return
+    }
+    // TODO: Save in session
     await ctx.reply(text.CREATE_OPTIONS_MSG)
     ctx.session.state = 'create-additional-options'
 })
