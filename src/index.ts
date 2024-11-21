@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
+import { differenceInDays, parse } from 'date-fns'
 
 type SessionData = {
     state:
@@ -39,7 +40,18 @@ bot.command('new', async (ctx) => {
 
 const router = new Router<MyContext>((ctx) => ctx.session.state)
 
-router.route('create-start-date').on('message', async (ctx) => {
+router.route('create-start-date').on('message:text', async (ctx) => {
+    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    if (isNaN(res.valueOf())) {
+        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        return
+    }
+    const diff = differenceInDays(res, new Date())
+    if (diff < 2 || diff > 31) {
+        await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+        return
+    }
+    // TODO: Save in session
     await ctx.reply(text.CREATE_SELECT_DATE_MSG)
     ctx.session.state = 'create-select-date'
 })
