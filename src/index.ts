@@ -80,7 +80,9 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
     ctx.session.state = 'create-rules'
 })
 
-router.route('create-rules').on('message', async (ctx) => {
+router.route('create-rules').on('message:text', async (ctx) => {
+    const rulesId = ctx.msg.message_id;
+    // TODO: Save in session
     await ctx.reply(text.CREATE_RESTRICTIONS_MSG)
     ctx.session.state = 'create-restrictions'
 })
