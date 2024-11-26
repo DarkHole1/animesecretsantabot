@@ -36,8 +36,13 @@ const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
 
 bot.command('start', async (ctx) => {
-    await ctx.reply(text.WELCOME_MSG)
-    ctx.session.state = 'participate-info'
+    if(ctx.match) {
+        // TODO: Send welcome message
+        await ctx.reply(`HELLO`)
+        ctx.session.state = 'participate-info'
+    } else {
+        await ctx.reply(text.WELCOME_MSG)
+    }
 })
 
 bot.command('new', async (ctx) => {
