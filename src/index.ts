@@ -23,6 +23,7 @@ type SessionData = {
     startDate?: Date
     selectDate?: Date
     deadlineDate?: Date
+    chatId?: number
     rulesId?: number
     restrictions?: Restriction[]
     options?: Map<string, boolean>
@@ -36,7 +37,7 @@ const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
 
 bot.command('start', async (ctx) => {
-    if(ctx.match) {
+    if (ctx.match) {
         // TODO: Send welcome message
         await ctx.reply(`HELLO`)
         ctx.session.state = 'participate-info'
@@ -111,15 +112,19 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
             one_time_keyboard: true,
             is_persistent: true,
             resize_keyboard: true,
-            keyboard: [[{
-                text: text.SELECT_CHAT_BUTTON,
-                request_chat: {
-                    request_id: Math.floor(Math.random() * 1000),
-                    chat_is_channel: false,
-                    bot_is_member: true
-                }
-            }]]
-        }
+            keyboard: [
+                [
+                    {
+                        text: text.SELECT_CHAT_BUTTON,
+                        request_chat: {
+                            request_id: Math.floor(Math.random() * 1000),
+                            chat_is_channel: false,
+                            bot_is_member: true,
+                        },
+                    },
+                ],
+            ],
+        },
     })
     ctx.session.deadlineDate = res
     ctx.session.state = 'create-chat'
@@ -127,7 +132,7 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
 
 router.route('create-chat').on(':chat_shared', async (ctx) => {
     await ctx.reply(text.CREATE_RULES_MSG)
-    // ctx.session.deadlineDate = res
+    ctx.session.chatId = ctx.msg.chat_shared.chat_id
     ctx.session.state = 'create-rules'
 })
 
