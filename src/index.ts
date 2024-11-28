@@ -5,6 +5,7 @@ import { Router } from '@grammyjs/router'
 import * as text from './text'
 import { differenceInDays, parse } from 'date-fns'
 import { parseRestrictions, Restriction } from './restrictions'
+import { SantaModel } from './models/Santa'
 
 type SessionData = {
     state:
@@ -157,8 +158,22 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
 router.route('create-additional-options').on('message:text', async (ctx) => {
     // TODO: Add parsing options
     ctx.session.options = new Map()
-    // TODO: Add database saving
-    await ctx.reply(text.CREATE_FINISH_MSG(`https://t.me/frrrrrrbot`))
+    // TODO: Validate
+    const santa = new SantaModel({
+        chat: ctx.session.chatId,
+        creator: ctx.chatId,
+        deadlineDate: ctx.session.deadlineDate,
+        selectDate: ctx.session.selectDate,
+        startDate: ctx.session.startDate,
+        rules: ctx.session.rulesId,
+        options: ctx.session.options,
+    })
+    await santa.save()
+    await ctx.reply(
+        text.CREATE_FINISH_MSG(
+            `https://t.me/${ctx.me.username}?start=${santa.id}`
+        )
+    )
     ctx.session.state = 'start'
 })
 

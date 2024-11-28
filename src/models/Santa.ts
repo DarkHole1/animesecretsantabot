@@ -8,6 +8,9 @@ class Santa {
     startDate!: Date
 
     @prop({ required: true })
+    selectDate!: Date
+
+    @prop({ required: true })
     deadlineDate!: Date
 
     @prop({ required: true })
