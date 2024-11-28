@@ -6,6 +6,7 @@ import * as text from './text'
 import { differenceInDays, parse } from 'date-fns'
 import { parseRestrictions, Restriction } from './restrictions'
 import { SantaModel } from './models/Santa'
+import mongoose from 'mongoose'
 
 type SessionData = {
     state:
@@ -34,6 +35,8 @@ type MyContext = Context & SessionFlavor<SessionData>
 
 const config = toml.parse(readFileSync('config.toml', 'utf-8'))
 const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
+
+mongoose.connect((config.MongoDB as JsonMap).uri as string)
 
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
 
