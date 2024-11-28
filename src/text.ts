@@ -52,3 +52,5 @@ export const PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG = `Вы успешно нап�
 
 export const CREATE_FINISH_MSG = (link: string) =>
     `Ура! У вас получилось. Ссылка для присоединения ${link}.`
+
+export const SELECT_CHAT_BUTTON = `Выбрать чат`

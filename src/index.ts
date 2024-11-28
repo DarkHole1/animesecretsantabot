@@ -105,8 +105,29 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
         await ctx.reply(text.DATE_INVALID_ERROR_MSG)
         return
     }
-    await ctx.reply(text.CREATE_RULES_MSG)
+
+    await ctx.reply(text.CREATE_CHAT_MSG, {
+        reply_markup: {
+            one_time_keyboard: true,
+            is_persistent: true,
+            resize_keyboard: true,
+            keyboard: [[{
+                text: text.SELECT_CHAT_BUTTON,
+                request_chat: {
+                    request_id: Math.floor(Math.random() * 1000),
+                    chat_is_channel: false,
+                    bot_is_member: true
+                }
+            }]]
+        }
+    })
     ctx.session.deadlineDate = res
+    ctx.session.state = 'create-chat'
+})
+
+router.route('create-chat').on(':chat_shared', async (ctx) => {
+    await ctx.reply(text.CREATE_RULES_MSG)
+    // ctx.session.deadlineDate = res
     ctx.session.state = 'create-rules'
 })
 
