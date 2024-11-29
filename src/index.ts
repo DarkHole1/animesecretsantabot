@@ -42,7 +42,13 @@ bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
 
 bot.command('start', async (ctx) => {
     if (ctx.match) {
-        // TODO: Send welcome message
+        const santa = await SantaModel.findById(ctx.match)
+        if (!santa) {
+            // TODO: Error message
+            await ctx.reply(text.WELCOME_MSG)
+            return
+        }
+        await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
         await ctx.reply(`HELLO`)
         ctx.session.state = 'participate-info'
     } else {
