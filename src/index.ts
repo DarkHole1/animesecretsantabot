@@ -7,7 +7,7 @@ import { differenceInDays, parse } from 'date-fns'
 import { parseRestrictions, Restriction } from './restrictions'
 import { SantaModel } from './models/Santa'
 import mongoose from 'mongoose'
-import { ParticipantModel } from './models/Participant'
+import { ParticipantModel, ParticipantStatus } from './models/Participant'
 
 type SessionData = {
     state:
@@ -203,13 +203,41 @@ router.route('participate-info').on('message:text', async (ctx) => {
 
 router.route('participate-options').on('message', async (ctx) => {
     // TODO: Validate
+    const santa = await SantaModel.findById(ctx.session.santaId)
+    if (!santa) {
+        // TODO: Error message
+        ctx.session.state = 'start'
+        return
+    }
     const participant = new ParticipantModel({
         santa: ctx.session.santaId,
         user: ctx.from.id,
         info: ctx.session.infoId,
+        approved: ParticipantStatus.WAITING,
         options: ctx.session.options,
     })
     await participant.save()
+    // TODO: Localization
+    await ctx.api.sendMessage(
+        santa.creator,
+        `New participiant ${ctx.from.first_name} (@${ctx.from.username})`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: 'Accept',
+                            callback_data: `accept:${santa.id}:${ctx.from.id}`,
+                        },
+                        {
+                            text: 'Reject',
+                            callback_data: `reject:${santa.id}:${ctx.from.id}`,
+                        },
+                    ],
+                ],
+            },
+        }
+    )
     await ctx.reply(text.PARTICIPATE_SENT_MSG)
     ctx.session.state = 'start'
 })
@@ -223,6 +251,8 @@ router.route('participate-write-review').on('message', async (ctx) => {
     await ctx.reply(text.PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
+
+// TODO: Approve and reject queries
 
 bot.use(router)
 
