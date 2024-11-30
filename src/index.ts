@@ -7,6 +7,7 @@ import { differenceInDays, parse } from 'date-fns'
 import { parseRestrictions, Restriction } from './restrictions'
 import { SantaModel } from './models/Santa'
 import mongoose from 'mongoose'
+import { ParticipantModel } from './models/Participant'
 
 type SessionData = {
     state:
@@ -29,6 +30,7 @@ type SessionData = {
     rulesId?: number
     restrictions?: Restriction[]
 
+    santaId?: string
     infoId?: number
 
     options?: Map<string, boolean>
@@ -52,7 +54,10 @@ bot.command('start', async (ctx) => {
             return
         }
         await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
+        // TODO: Add info message
         await ctx.reply(`HELLO`)
+        // TODO: Prevent secondary registration
+        ctx.session.santaId = ctx.match
         ctx.session.state = 'participate-info'
     } else {
         await ctx.reply(text.WELCOME_MSG)
@@ -192,13 +197,20 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
 router.route('participate-info').on('message:text', async (ctx) => {
     await ctx.reply(text.PARTICIPATE_OPTIONS_MSG)
     ctx.session.infoId = ctx.msg.message_id
-    ctx.session.options = new Map();
+    ctx.session.options = new Map()
     ctx.session.state = 'participate-options'
 })
 
 router.route('participate-options').on('message', async (ctx) => {
+    // TODO: Validate
+    const participant = new ParticipantModel({
+        santa: ctx.session.santaId,
+        user: ctx.from.id,
+        info: ctx.session.infoId,
+        options: ctx.session.options,
+    })
+    await participant.save()
     await ctx.reply(text.PARTICIPATE_SENT_MSG)
-    // TODO: Save to db
     ctx.session.state = 'start'
 })
 

@@ -1,15 +1,15 @@
 import { DocumentType, getModelForClass, prop } from "@typegoose/typegoose";
-import { ObjectId } from "mongoose";
+import mongoose from "mongoose";
 
 class Participant {
     @prop({ required: true })
-    santaId!: ObjectId
+    santa!: mongoose.Types.ObjectId
 
     @prop({ required: true })
-    userId!: number
+    user!: number
 
     @prop({ required: true })
-    messageId!: number
+    info!: number
 
     @prop({ required: true, type: () => Boolean })
     options!: Map<string, boolean>
