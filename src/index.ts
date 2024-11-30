@@ -28,6 +28,9 @@ type SessionData = {
     chatId?: number
     rulesId?: number
     restrictions?: Restriction[]
+
+    infoId?: number
+
     options?: Map<string, boolean>
 }
 
@@ -186,13 +189,16 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
     ctx.session.state = 'start'
 })
 
-router.route('participate-info').on('message', async (ctx) => {
+router.route('participate-info').on('message:text', async (ctx) => {
     await ctx.reply(text.PARTICIPATE_OPTIONS_MSG)
+    ctx.session.infoId = ctx.msg.message_id
+    ctx.session.options = new Map();
     ctx.session.state = 'participate-options'
 })
 
 router.route('participate-options').on('message', async (ctx) => {
     await ctx.reply(text.PARTICIPATE_SENT_MSG)
+    // TODO: Save to db
     ctx.session.state = 'start'
 })
 
