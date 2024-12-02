@@ -252,7 +252,33 @@ router.route('participate-write-review').on('message', async (ctx) => {
     ctx.session.state = 'start'
 })
 
-// TODO: Approve and reject queries
+bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
+    const match = ctx.match as RegExpMatchArray
+    const choice = match[1]
+    const santaId = match[2]
+    const userId = match[3]
+
+    const participant = await ParticipantModel.findOne({
+        user: userId,
+        santa: santaId,
+    })
+
+    if (!participant) {
+        // TODO: Localize
+        await ctx.answerCallbackQuery(`No such user`)
+        return
+    }
+
+    if (choice == 'accept') {
+        participant.approved = ParticipantStatus.APPROVED
+    } else {
+        participant.approved = ParticipantStatus.REJECTED
+    }
+
+    await participant.save()
+    // TODO: Localize
+    await ctx.answerCallbackQuery(`Succesfully changed user status`)
+})
 
 bot.use(router)
 
