@@ -26,6 +26,9 @@ class Participant {
 
     @prop({ required: true, type: () => Boolean })
     options!: Map<string, boolean>
+
+    @prop()
+    choice?: string
 }
 
 export const ParticipantModel = getModelForClass(Participant)

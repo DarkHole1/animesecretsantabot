@@ -186,6 +186,7 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
         startDate: ctx.session.startDate,
         rules: ctx.session.rulesId,
         options: ctx.session.options,
+        pairing: new Map(),
     })
     await santa.save()
     await ctx.reply(
@@ -312,13 +313,42 @@ const job = CronJob.from({
                 pairing.set(current.id!.toString(), next.id!.toString())
             }
             startedSanta.pairing = pairing
-            await startedSanta.save();
+            await startedSanta.save()
             for (let i = 0; i < shuffledParticipants.length; i++) {
                 const current = participants[i]
                 const next = participants[(i + 1) % participants.length]
                 // TODO: Localize
-                await bot.api.sendMessage(current.user, `Please select anime for your ward, his wishes:`)
+                await bot.api.sendMessage(
+                    current.user,
+                    `Please select anime for your ward, his wishes:`
+                )
                 await bot.api.copyMessage(current.user, next.user, next.info)
+            }
+        }
+
+        for (const selectedSanta of selected) {
+            // TODO: Send warning messages to whom not selected
+            const participants = await ParticipantModel.find({
+                santa: selectedSanta.id,
+                approved: ParticipantStatus.APPROVED,
+                choice: { $exists: true },
+            })
+
+            for (const participant of participants) {
+                const to = await ParticipantModel.findById(
+                    selectedSanta.pairing.get(participant.id!.toString())
+                )
+                if (!to) {
+                    // TODO: Send error message
+                    continue
+                }
+                // TODO: Localize
+                await bot.api.sendMessage(
+                    to.user,
+                    `Your santa selected: ${participant.choice!}. Keep calm and write review before ${
+                        selectedSanta.deadlineDate
+                    }.`
+                )
             }
         }
     },
