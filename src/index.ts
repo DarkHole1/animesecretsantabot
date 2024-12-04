@@ -71,6 +71,10 @@ bot.command('new', async (ctx) => {
     ctx.session.state = 'create-start-date'
 })
 
+bot.command('cancel', (ctx) => {
+    ctx.session.state = 'start'
+})
+
 const router = new Router<MyContext>((ctx) => ctx.session.state)
 
 router.route('create-start-date').on('message:text', async (ctx) => {
