@@ -5,6 +5,8 @@ export enum ParticipantStatus {
     WAITING = 'waiting',
     APPROVED = 'approved',
     REJECTED = 'rejected',
+    WATCHING = 'watching',
+    COMPLETED = 'completed',
 }
 
 class Participant {
@@ -22,7 +24,7 @@ class Participant {
         default: ParticipantStatus.WAITING,
         enum: ParticipantStatus,
     })
-    approved!: ParticipantStatus
+    status!: ParticipantStatus
 
     @prop({ required: true, type: () => Boolean })
     options!: Map<string, boolean>

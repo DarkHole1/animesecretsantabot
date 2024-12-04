@@ -273,9 +273,9 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
     }
 
     if (choice == 'accept') {
-        participant.approved = ParticipantStatus.APPROVED
+        participant.status = ParticipantStatus.APPROVED
     } else {
-        participant.approved = ParticipantStatus.REJECTED
+        participant.status = ParticipantStatus.REJECTED
     }
 
     await participant.save()
@@ -292,14 +292,14 @@ const job = CronJob.from({
         const started = await SantaModel.find({ startDate: today })
         // TODO: Add reminders
         const selected = await SantaModel.find({ selectDate: today })
-        const deadline = await SantaModel.find({ deadlineDate: today })
+        const deadlined = await SantaModel.find({ deadlineDate: today })
 
         // TODO: Auto retry
         for (const startedSanta of started) {
             // TODO: Send waiting messages
             const participants = await ParticipantModel.find({
                 santa: startedSanta.id,
-                approved: ParticipantStatus.APPROVED,
+                status: ParticipantStatus.APPROVED,
             })
             if (participants.length <= 2) {
                 // TODO: Delete santa without users
@@ -330,7 +330,7 @@ const job = CronJob.from({
             // TODO: Send warning messages to whom not selected
             const participants = await ParticipantModel.find({
                 santa: selectedSanta.id,
-                approved: ParticipantStatus.APPROVED,
+                status: ParticipantStatus.APPROVED,
                 choice: { $exists: true },
             })
 
@@ -348,6 +348,24 @@ const job = CronJob.from({
                     `Your santa selected: ${participant.choice!}. Keep calm and write review before ${
                         selectedSanta.deadlineDate
                     }.`
+                )
+                to.status = ParticipantStatus.WATCHING
+                await to.save()
+            }
+        }
+
+        for (const deadlineSanta of deadlined) {
+            // TODO: Warn participants
+            const participants = await ParticipantModel.find({
+                santa: deadlineSanta.id,
+                status: ParticipantStatus.WATCHING,
+            })
+
+            if (deadlineSanta.chat) {
+                // TODO: Localize
+                await bot.api.sendMessage(
+                    deadlineSanta.chat,
+                    `Santa ended, bad users: ${participants.length}`
                 )
             }
         }
