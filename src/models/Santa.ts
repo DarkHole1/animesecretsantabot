@@ -21,6 +21,9 @@ class Santa {
 
     @prop({ required: true, type: () => Boolean })
     options!: Map<string, boolean>
+
+    @prop({ required: true, type: () => String })
+    pairing!: Map<string, string>
 }
 
 export const SantaModel = getModelForClass(Santa)

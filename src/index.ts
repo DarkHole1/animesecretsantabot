@@ -3,11 +3,13 @@ import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
-import { differenceInDays, parse } from 'date-fns'
+import { differenceInDays, parse, startOfDay } from 'date-fns'
 import { parseRestrictions, Restriction } from './restrictions'
 import { SantaModel } from './models/Santa'
 import mongoose from 'mongoose'
 import { ParticipantModel, ParticipantStatus } from './models/Participant'
+import { CronJob } from 'cron'
+import _ from 'underscore'
 
 type SessionData = {
     state:
@@ -281,5 +283,45 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
 })
 
 bot.use(router)
+
+const job = CronJob.from({
+    cronTime: '0 10 * * *',
+    onTick: async () => {
+        const today = startOfDay(new Date())
+        const started = await SantaModel.find({ startDate: today })
+        // TODO: Add reminders
+        const selected = await SantaModel.find({ selectDate: today })
+        const deadline = await SantaModel.find({ deadlineDate: today })
+
+        // TODO: Auto retry
+        for (const startedSanta of started) {
+            // TODO: Send waiting messages
+            const participants = await ParticipantModel.find({
+                santa: startedSanta.id,
+                approved: ParticipantStatus.APPROVED,
+            })
+            if (participants.length <= 2) {
+                // TODO: Delete santa without users
+                continue
+            }
+            const shuffledParticipants = _.shuffle(participants)
+            const pairing = new Map<string, string>()
+            for (let i = 0; i < shuffledParticipants.length; i++) {
+                const current = participants[i]
+                const next = participants[(i + 1) % participants.length]
+                pairing.set(current.id!.toString(), next.id!.toString())
+            }
+            startedSanta.pairing = pairing
+            await startedSanta.save();
+            for (let i = 0; i < shuffledParticipants.length; i++) {
+                const current = participants[i]
+                const next = participants[(i + 1) % participants.length]
+                // TODO: Localize
+                await bot.api.sendMessage(current.user, `Please select anime for your ward, his wishes:`)
+                await bot.api.copyMessage(current.user, next.user, next.info)
+            }
+        }
+    },
+})
 
 bot.start()
