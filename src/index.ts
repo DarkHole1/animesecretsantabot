@@ -71,6 +71,29 @@ bot.command('new', async (ctx) => {
     ctx.session.state = 'create-start-date'
 })
 
+bot.command('my', async (ctx) => {
+    const created = await SantaModel.find({ creator: ctx.from!.id })
+    const participated = await ParticipantModel.find({
+        user: ctx.from!.id,
+        $or: [
+            { status: ParticipantStatus.APPROVED },
+            { status: ParticipantStatus.WATCHING },
+        ],
+    })
+
+    await ctx.reply(
+        `Created:\n${created
+            .map((santa) => `/my${santa.id}`)
+            .join('\n')}\nSelecting title:\n${participated
+            .filter((santa) => santa.status == ParticipantStatus.APPROVED)
+            .map((santa) => `/choose${santa.id}`)
+            .join('\n')}\nWrite a review:\n${participated
+            .filter((santa) => santa.status == ParticipantStatus.WATCHING)
+            .map((santa) => `/review${santa.id}`)
+            .join('\n')}`
+    )
+})
+
 bot.command('cancel', (ctx) => {
     ctx.session.state = 'start'
 })
