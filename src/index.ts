@@ -10,6 +10,7 @@ import mongoose from 'mongoose'
 import { ParticipantModel, ParticipantStatus } from './models/Participant'
 import { CronJob } from 'cron'
 import _ from 'underscore'
+import { CommandGroup } from '@grammyjs/commands'
 
 type SessionData = {
     state:
@@ -97,6 +98,33 @@ bot.command('my', async (ctx) => {
 bot.command('cancel', (ctx) => {
     ctx.session.state = 'start'
 })
+
+// TODO: my + id command
+// TODO: choose + id command
+// TODO: review + id command
+
+const commands = new CommandGroup<MyContext>()
+
+commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
+    const id = ctx.msg.text.slice('/choose'.length)
+    const participant = await ParticipantModel.find({
+        santa: id,
+        user: ctx.from!.id,
+        status: ParticipantStatus.APPROVED,
+    })
+
+    if (!participant) {
+        // TODO: Error message
+        return
+    }
+
+    ctx.session.santaId = id
+    ctx.session.state = 'participate-select-title'
+    // TODO: Localize
+    await ctx.reply(`Select title`)
+})
+
+bot.use(commands)
 
 const router = new Router<MyContext>((ctx) => ctx.session.state)
 
