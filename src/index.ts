@@ -100,8 +100,6 @@ bot.command('cancel', (ctx) => {
 })
 
 // TODO: my + id command
-// TODO: choose + id command
-// TODO: review + id command
 
 const commands = new CommandGroup<MyContext>()
 
@@ -122,6 +120,25 @@ commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     ctx.session.state = 'participate-select-title'
     // TODO: Localize
     await ctx.reply(`Select title`)
+})
+
+commands.command(/review(.+)/, 'Review anime', async (ctx) => {
+    const id = ctx.msg.text.slice('/review'.length)
+    const participant = await ParticipantModel.find({
+        santa: id,
+        user: ctx.from!.id,
+        status: ParticipantStatus.WATCHING,
+    })
+
+    if (!participant) {
+        // TODO: Error message
+        return
+    }
+
+    ctx.session.santaId = id
+    ctx.session.state = 'participate-write-review'
+    // TODO: Localize
+    await ctx.reply(`Write review`)
 })
 
 bot.use(commands)
