@@ -91,7 +91,7 @@ bot.command('my', async (ctx) => {
 
     await ctx.reply(
         `Created:\n${created
-            .map((santa) => `/my${santa.id}`)
+            .map((santa) => `${santa.name} /my${santa.id}`)
             .join('\n')}\nSelecting title:\n${participated
             .filter((santa) => santa.status == ParticipantStatus.APPROVED)
             .map((santa) => `/choose${santa.id}`)
