@@ -12,6 +12,7 @@
     "@typegoose/typegoose": "^12.9.1",
     "@types/node": "^22.8.5",
     "@types/underscore": "^1.13.0",
+    "axios": "^1.7.9",
     "cron": "^3.2.1",
     "date-fns": "^4.1.0",
     "grammy": "^1.30.1",

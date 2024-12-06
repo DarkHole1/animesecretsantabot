@@ -1,10 +1,14 @@
 import { Bot, Context, session, SessionFlavor } from 'grammy'
-import { readFileSync } from 'fs'
+import { link, readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
 import { differenceInDays, parse, startOfDay } from 'date-fns'
-import { parseRestrictions, Restriction } from './restrictions'
+import {
+    checkShikimoriRestrictions,
+    parseRestrictions,
+    Restriction,
+} from './restrictions'
 import { SantaModel } from './models/Santa'
 import mongoose from 'mongoose'
 import { ParticipantModel, ParticipantStatus } from './models/Participant'
@@ -225,8 +229,8 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
 router.route('create-chat').on(':chat_shared', async (ctx) => {
     await ctx.reply(text.CREATE_RULES_MSG, {
         reply_markup: {
-            remove_keyboard: true
-        }
+            remove_keyboard: true,
+        },
     })
     ctx.session.chatId = ctx.msg.chat_shared.chat_id
     ctx.session.state = 'create-rules'
@@ -322,6 +326,55 @@ router.route('participate-options').on('message', async (ctx) => {
 })
 
 router.route('participate-select-title').on('message', async (ctx) => {
+    const links = ctx.entities().flatMap((link) => {
+        if (link.type == 'text_link') {
+            return [link.url]
+        }
+        if (link.type == 'url') {
+            return [link.text]
+        }
+        return []
+    })
+    const animeLinks = links.flatMap((link) => {
+        const match = link.match(
+            /(?:https:\/\/)?shikimori\.(?:one|me)\/animes\/[^\d]*(\d+)/
+        )
+        if (!match) return []
+        return parseInt(match[1])
+    })
+    if (animeLinks.length <= 0) {
+        // TODO: Error message
+        return
+    }
+    if (animeLinks.length > 1) {
+        // TODO: Error message
+        return
+    }
+    const shikimoriLink = animeLinks[0]
+    const santa = await SantaModel.findById(ctx.session.santaId)
+    if (!santa) {
+        // TODO: Error message
+        ctx.session.state = 'start'
+        return
+    }
+    // TODO: Add restrictions to santa
+    const valid = await checkShikimoriRestrictions(shikimoriLink, [])
+    if (!valid) {
+        // TODO: Localize:
+        await ctx.reply(`You shall not pass`)
+        return
+    }
+
+    const participant = await ParticipantModel.findOne({
+        user: ctx.from.id,
+        santa: ctx.session.santaId,
+    })
+    if (!participant) {
+        // TODO: Error message
+        return
+    }
+    participant.choice = `https://shikimori.one/animes/${shikimoriLink}`
+    await participant.save()
     await ctx.reply(text.PARTICIPATE_SELECT_TITLE_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
