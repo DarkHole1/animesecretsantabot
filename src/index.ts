@@ -270,6 +270,7 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
     const santa = new SantaModel({
         chat: ctx.session.chatId,
         creator: ctx.chatId,
+        name: ctx.session.name,
         deadlineDate: ctx.session.deadlineDate,
         selectDate: ctx.session.selectDate,
         startDate: ctx.session.startDate,
@@ -437,6 +438,10 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
 
     await participant.save()
     // TODO: Localize
+    await ctx.api.sendMessage(
+        participant.user,
+        `Your application was ${choice}`
+    )
     await ctx.answerCallbackQuery(`Succesfully changed user status`)
 })
 
