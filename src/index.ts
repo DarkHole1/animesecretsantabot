@@ -165,10 +165,10 @@ router.route('create-start-date').on('message:text', async (ctx) => {
         return
     }
     const diff = differenceInDays(res, new Date())
-    if (diff < 2 || diff > 31) {
-        await ctx.reply(text.DATE_INVALID_ERROR_MSG)
-        return
-    }
+    // if (diff < 2 || diff > 31) {
+    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     return
+    // }
     await ctx.reply(text.CREATE_SELECT_DATE_MSG)
     ctx.session.startDate = res
     ctx.session.state = 'create-select-date'
@@ -186,10 +186,10 @@ router.route('create-select-date').on('message:text', async (ctx) => {
         return
     }
     const diff = differenceInDays(res, ctx.session.startDate)
-    if (diff < 2 || diff > 31) {
-        await ctx.reply(text.DATE_INVALID_ERROR_MSG)
-        return
-    }
+    // if (diff < 2 || diff > 31) {
+    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     return
+    // }
     await ctx.reply(text.CREATE_DEADLINE_DATE_MSG)
     ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
@@ -206,11 +206,11 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
         ctx.session.state = 'create-select-date'
         return
     }
-    const diff = differenceInDays(res, ctx.session.selectDate)
-    if (diff < 2 || diff > 31) {
-        await ctx.reply(text.DATE_INVALID_ERROR_MSG)
-        return
-    }
+    // const diff = differenceInDays(res, ctx.session.selectDate)
+    // if (diff < 2 || diff > 31) {
+    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     return
+    // }
 
     await ctx.reply(text.CREATE_CHAT_MSG, {
         reply_markup: {
@@ -465,7 +465,7 @@ const job = CronJob.from({
             })
             if (participants.length <= 2) {
                 // TODO: Delete santa without users
-                continue
+                // continue
             }
             const shuffledParticipants = _.shuffle(participants)
             const pairing = new Map<string, string>()
@@ -523,13 +523,11 @@ const job = CronJob.from({
                 status: ParticipantStatus.WATCHING,
             })
 
-            if (deadlineSanta.chat) {
-                // TODO: Localize
-                await bot.api.sendMessage(
-                    deadlineSanta.chat,
-                    `Santa ended, bad users: ${participants.length}`
-                )
-            }
+            // TODO: Localize
+            await bot.api.sendMessage(
+                deadlineSanta.chat ?? deadlineSanta.creator,
+                `Santa ended, bad users: ${participants.length}`
+            )
         }
     },
 })
