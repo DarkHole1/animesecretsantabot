@@ -380,8 +380,25 @@ router.route('participate-select-title').on('message', async (ctx) => {
     ctx.session.state = 'start'
 })
 
-router.route('participate-write-review').on('message', async (ctx) => {
-    // TODO: Add review logic
+router.route('participate-write-review').on('message:text', async (ctx) => {
+    if (ctx.msg.text.split(/\s+/).length < 50) {
+        // TODO: Localize
+        await ctx.reply(`Too short`)
+        return
+    }
+    const santa = await SantaModel.findById(ctx.session.santaId)
+    const participant = await ParticipantModel.findOne({
+        user: ctx.msg.from.id,
+        santa: ctx.session.santaId,
+    })
+    if (!participant || !santa) {
+        // TODO: Error
+        return
+    }
+    await ctx.forwardMessage(santa.chat ?? santa.creator)
+
+    participant.status = ParticipantStatus.COMPLETED
+    await participant.save()
     await ctx.reply(text.PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
