@@ -19,6 +19,7 @@ import { CommandGroup } from '@grammyjs/commands'
 type SessionData = {
     state:
         | 'start'
+        | 'create-name'
         | 'create-start-date'
         | 'create-select-date'
         | 'create-deadline-date'
@@ -30,6 +31,7 @@ type SessionData = {
         | 'participate-options'
         | 'participate-select-title'
         | 'participate-write-review'
+    name?: string
     startDate?: Date
     selectDate?: Date
     deadlineDate?: Date
@@ -72,8 +74,9 @@ bot.command('start', async (ctx) => {
 })
 
 bot.command('new', async (ctx) => {
-    await ctx.reply(text.CREATE_START_DATE_MSG)
-    ctx.session.state = 'create-start-date'
+    // TODO: Localize
+    await ctx.reply(`First comes name`)
+    ctx.session.state = 'create-name'
 })
 
 bot.command('my', async (ctx) => {
@@ -148,6 +151,12 @@ commands.command(/review(.+)/, 'Review anime', async (ctx) => {
 bot.use(commands)
 
 const router = new Router<MyContext>((ctx) => ctx.session.state)
+
+router.route('create-name').on('message:text', async (ctx) => {
+    await ctx.reply(text.CREATE_START_DATE_MSG)
+    ctx.session.name = ctx.message.text
+    ctx.session.state = 'create-start-date'
+})
 
 router.route('create-start-date').on('message:text', async (ctx) => {
     const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())

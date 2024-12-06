@@ -15,6 +15,9 @@ class Santa {
     creator!: number
 
     @prop({ required: true })
+    name!: string
+
+    @prop({ required: true })
     startDate!: Date
 
     @prop({ required: true })
