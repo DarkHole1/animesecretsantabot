@@ -223,7 +223,11 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
 })
 
 router.route('create-chat').on(':chat_shared', async (ctx) => {
-    await ctx.reply(text.CREATE_RULES_MSG)
+    await ctx.reply(text.CREATE_RULES_MSG, {
+        reply_markup: {
+            remove_keyboard: true
+        }
+    })
     ctx.session.chatId = ctx.msg.chat_shared.chat_id
     ctx.session.state = 'create-rules'
 })
