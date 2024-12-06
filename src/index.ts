@@ -380,6 +380,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
 })
 
 router.route('participate-write-review').on('message', async (ctx) => {
+    // TODO: Add review logic
     await ctx.reply(text.PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG)
     ctx.session.state = 'start'
 })
