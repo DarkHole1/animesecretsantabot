@@ -265,6 +265,7 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
         selectDate: ctx.session.selectDate,
         startDate: ctx.session.startDate,
         rules: ctx.session.rulesId,
+        restrictions: ctx.session.restrictions,
         options: ctx.session.options,
         pairing: new Map(),
     })

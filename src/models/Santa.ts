@@ -1,4 +1,14 @@
-import { DocumentType, getModelForClass, prop } from "@typegoose/typegoose";
+import { DocumentType, getModelForClass, prop } from '@typegoose/typegoose'
+import { Restriction as RealRestriction } from '../restrictions'
+
+class Restriction implements RealRestriction {
+    @prop({ required: true, enum: ['score', 'episodes', 'duration'] })
+    type!: 'score' | 'episodes' | 'duration'
+    @prop({ required: true, enum: ['>', '<'] })
+    operator!: '>' | '<'
+    @prop({ required: true })
+    value!: number
+}
 
 class Santa {
     @prop({ required: true })
@@ -18,6 +28,9 @@ class Santa {
 
     @prop()
     chat?: number
+
+    @prop({ required: true, type: () => [Restriction], _id: false })
+    restrictions!: Restriction[]
 
     @prop({ required: true, type: () => Boolean })
     options!: Map<string, boolean>
