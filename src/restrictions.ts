@@ -9,7 +9,7 @@ export type Restriction = {
 export const parseRestrictions = (text: string): Restriction[] | null => {
     const lines = text.split('\n')
     const parsedLines = lines.map((line) => {
-        const match = line.match(/(score|episodes|duration)(<|>)(\d+(?:\.\d+))/)
+        const match = line.match(/(score|episodes|duration)(<|>)(\d+(?:\.\d+)?)/)
         if (!match) {
             return null
         }
