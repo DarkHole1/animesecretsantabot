@@ -49,6 +49,7 @@ type MyContext = Context & SessionFlavor<SessionData>
 
 const config = toml.parse(readFileSync('config.toml', 'utf-8'))
 const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
+const superAdminId = (config.Telegram as JsonMap).super_admin_id as number
 
 mongoose.connect((config.MongoDB as JsonMap).uri as string)
 
@@ -450,84 +451,93 @@ bot.use(router)
 const job = CronJob.from({
     cronTime: '0 10 * * *',
     onTick: async () => {
-        const today = startOfDay(new Date())
-        const started = await SantaModel.find({ startDate: today })
-        // TODO: Add reminders
-        const selected = await SantaModel.find({ selectDate: today })
-        const deadlined = await SantaModel.find({ deadlineDate: today })
+        try {
+            const today = startOfDay(new Date())
+            const started = await SantaModel.find({ startDate: today })
+            // TODO: Add reminders
+            const selected = await SantaModel.find({ selectDate: today })
+            const deadlined = await SantaModel.find({ deadlineDate: today })
 
-        // TODO: Auto retry
-        for (const startedSanta of started) {
-            // TODO: Send waiting messages
-            const participants = await ParticipantModel.find({
-                santa: startedSanta.id,
-                status: ParticipantStatus.APPROVED,
-            })
-            if (participants.length <= 2) {
-                // TODO: Delete santa without users
-                // continue
-            }
-            const shuffledParticipants = _.shuffle(participants)
-            const pairing = new Map<string, string>()
-            for (let i = 0; i < shuffledParticipants.length; i++) {
-                const current = participants[i]
-                const next = participants[(i + 1) % participants.length]
-                pairing.set(current.id!.toString(), next.id!.toString())
-            }
-            startedSanta.pairing = pairing
-            await startedSanta.save()
-            for (let i = 0; i < shuffledParticipants.length; i++) {
-                const current = participants[i]
-                const next = participants[(i + 1) % participants.length]
-                // TODO: Localize
-                await bot.api.sendMessage(
-                    current.user,
-                    `Please select anime for your ward, his wishes:`
-                )
-                await bot.api.copyMessage(current.user, next.user, next.info)
-            }
-        }
-
-        for (const selectedSanta of selected) {
-            // TODO: Send warning messages to whom not selected
-            const participants = await ParticipantModel.find({
-                santa: selectedSanta.id,
-                status: ParticipantStatus.APPROVED,
-                choice: { $exists: true },
-            })
-
-            for (const participant of participants) {
-                const to = await ParticipantModel.findById(
-                    selectedSanta.pairing.get(participant.id!.toString())
-                )
-                if (!to) {
-                    // TODO: Send error message
-                    continue
+            // TODO: Auto retry
+            for (const startedSanta of started) {
+                // TODO: Send waiting messages
+                const participants = await ParticipantModel.find({
+                    santa: startedSanta.id,
+                    status: ParticipantStatus.APPROVED,
+                })
+                if (participants.length <= 2) {
+                    // TODO: Delete santa without users
+                    // continue
                 }
+                const shuffledParticipants = _.shuffle(participants)
+                const pairing = new Map<string, string>()
+                for (let i = 0; i < shuffledParticipants.length; i++) {
+                    const current = participants[i]
+                    const next = participants[(i + 1) % participants.length]
+                    pairing.set(current.id!.toString(), next.id!.toString())
+                }
+                startedSanta.pairing = pairing
+                await startedSanta.save()
+                for (let i = 0; i < shuffledParticipants.length; i++) {
+                    const current = participants[i]
+                    const next = participants[(i + 1) % participants.length]
+                    // TODO: Localize
+                    await bot.api.sendMessage(
+                        current.user,
+                        `Please select anime for your ward, his wishes:`
+                    )
+                    await bot.api.copyMessage(
+                        current.user,
+                        next.user,
+                        next.info
+                    )
+                }
+            }
+
+            for (const selectedSanta of selected) {
+                // TODO: Send warning messages to whom not selected
+                const participants = await ParticipantModel.find({
+                    santa: selectedSanta.id,
+                    status: ParticipantStatus.APPROVED,
+                    choice: { $exists: true },
+                })
+
+                for (const participant of participants) {
+                    const to = await ParticipantModel.findById(
+                        selectedSanta.pairing.get(participant.id!.toString())
+                    )
+                    if (!to) {
+                        // TODO: Send error message
+                        continue
+                    }
+                    // TODO: Localize
+                    await bot.api.sendMessage(
+                        to.user,
+                        `Your santa selected: ${participant.choice!}. Keep calm and write review before ${
+                            selectedSanta.deadlineDate
+                        }.`
+                    )
+                    to.status = ParticipantStatus.WATCHING
+                    await to.save()
+                }
+            }
+
+            for (const deadlineSanta of deadlined) {
+                // TODO: Warn participants
+                const participants = await ParticipantModel.find({
+                    santa: deadlineSanta.id,
+                    status: ParticipantStatus.WATCHING,
+                })
+
                 // TODO: Localize
                 await bot.api.sendMessage(
-                    to.user,
-                    `Your santa selected: ${participant.choice!}. Keep calm and write review before ${
-                        selectedSanta.deadlineDate
-                    }.`
+                    deadlineSanta.chat ?? deadlineSanta.creator,
+                    `Santa ended, bad users: ${participants.length}`
                 )
-                to.status = ParticipantStatus.WATCHING
-                await to.save()
             }
-        }
-
-        for (const deadlineSanta of deadlined) {
-            // TODO: Warn participants
-            const participants = await ParticipantModel.find({
-                santa: deadlineSanta.id,
-                status: ParticipantStatus.WATCHING,
-            })
-
-            // TODO: Localize
-            await bot.api.sendMessage(
-                deadlineSanta.chat ?? deadlineSanta.creator,
-                `Santa ended, bad users: ${participants.length}`
-            )
+        } catch (e) {
+            console.log(e)
+            await bot.api.sendMessage(superAdminId, `Error: ${e}`)
         }
     },
 })
