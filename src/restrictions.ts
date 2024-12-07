@@ -19,6 +19,9 @@ export const parseRestrictions = (text: string): Restriction[] | null => {
             value: parseInt(match[3]),
         } as Restriction
     })
+    if(parsedLines.some(e => e == null)) {
+        return null
+    }
     return parsedLines.filter((e) => e != null)
 }
 
