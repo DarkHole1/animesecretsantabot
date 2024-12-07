@@ -16,7 +16,7 @@ export const parseRestrictions = (text: string): Restriction[] | null => {
         return {
             type: match[1],
             operator: match[2],
-            value: parseInt(match[3]),
+            value: parseFloat(match[3]), 
         } as Restriction
     })
     if(parsedLines.some(e => e == null)) {
