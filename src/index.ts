@@ -542,4 +542,5 @@ const job = CronJob.from({
     },
 })
 
+job.start()
 bot.start()
