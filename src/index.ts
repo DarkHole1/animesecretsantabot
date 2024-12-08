@@ -1,5 +1,5 @@
 import { Bot, Context, session, SessionFlavor } from 'grammy'
-import { link, readFileSync } from 'fs'
+import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
 import * as text from './text'
@@ -15,6 +15,7 @@ import { ParticipantModel, ParticipantStatus } from './models/Participant'
 import { CronJob } from 'cron'
 import _ from 'underscore'
 import { CommandGroup } from '@grammyjs/commands'
+import { I18n, I18nFlavor } from '@grammyjs/i18n'
 
 type SessionData = {
     state:
@@ -45,7 +46,7 @@ type SessionData = {
     options?: Map<string, boolean>
 }
 
-type MyContext = Context & SessionFlavor<SessionData>
+type MyContext = Context & SessionFlavor<SessionData> & I18nFlavor
 
 const config = toml.parse(readFileSync('config.toml', 'utf-8'))
 const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
@@ -54,6 +55,12 @@ const superAdminId = (config.Telegram as JsonMap).super_admin_id as number
 mongoose.connect((config.MongoDB as JsonMap).uri as string)
 
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
+bot.use(
+    new I18n({
+        defaultLocale: 'ru',
+        directory: 'locales',
+    })
+)
 
 bot.command('start', async (ctx) => {
     if (ctx.match) {
@@ -70,7 +77,7 @@ bot.command('start', async (ctx) => {
         ctx.session.santaId = ctx.match
         ctx.session.state = 'participate-info'
     } else {
-        await ctx.reply(text.WELCOME_MSG)
+        await ctx.reply(ctx.t(`welcome-message`))
     }
 })
 
