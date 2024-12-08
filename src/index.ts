@@ -2,7 +2,6 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import * as text from './text'
 import { differenceInDays, parse, startOfDay } from 'date-fns'
 import {
     checkShikimoriRestrictions,
@@ -66,8 +65,7 @@ bot.command('start', async (ctx) => {
     if (ctx.match) {
         const santa = await SantaModel.findById(ctx.match)
         if (!santa) {
-            // TODO: Error message
-            await ctx.reply(text.WELCOME_MSG)
+            await ctx.reply(ctx.t(`santa-not-found-error`))
             return
         }
         await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
@@ -82,8 +80,7 @@ bot.command('start', async (ctx) => {
 })
 
 bot.command('new', async (ctx) => {
-    // TODO: Localize
-    await ctx.reply(`First comes name`)
+    await ctx.reply(ctx.t(`choose-name`))
     ctx.session.state = 'create-name'
 })
 
@@ -161,7 +158,7 @@ bot.use(commands)
 const router = new Router<MyContext>((ctx) => ctx.session.state)
 
 router.route('create-name').on('message:text', async (ctx) => {
-    await ctx.reply(text.CREATE_START_DATE_MSG)
+    await ctx.reply(ctx.t(`choose-start-date`))
     ctx.session.name = ctx.message.text
     ctx.session.state = 'create-start-date'
 })
@@ -169,15 +166,15 @@ router.route('create-name').on('message:text', async (ctx) => {
 router.route('create-start-date').on('message:text', async (ctx) => {
     const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
     if (isNaN(res.valueOf())) {
-        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        await ctx.reply(ctx.t(`parse-date-error`))
         return
     }
     const diff = differenceInDays(res, new Date())
     // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     await ctx.reply(ctx.t(`invalid-date-error`))
     //     return
     // }
-    await ctx.reply(text.CREATE_SELECT_DATE_MSG)
+    await ctx.reply(ctx.t(`choose-select-date`))
     ctx.session.startDate = res
     ctx.session.state = 'create-select-date'
 })
@@ -185,7 +182,7 @@ router.route('create-start-date').on('message:text', async (ctx) => {
 router.route('create-select-date').on('message:text', async (ctx) => {
     const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
     if (isNaN(res.valueOf())) {
-        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        await ctx.reply(ctx.t(`parse-date-error`))
         return
     }
     if (!ctx.session.startDate) {
@@ -195,10 +192,10 @@ router.route('create-select-date').on('message:text', async (ctx) => {
     }
     const diff = differenceInDays(res, ctx.session.startDate)
     // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     await ctx.reply(ctx.t(`invalid-date-error`))
     //     return
     // }
-    await ctx.reply(text.CREATE_DEADLINE_DATE_MSG)
+    await ctx.reply(ctx.t(`choose-deadline-date`))
     ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
 })
@@ -206,7 +203,7 @@ router.route('create-select-date').on('message:text', async (ctx) => {
 router.route('create-deadline-date').on('message:text', async (ctx) => {
     const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
     if (isNaN(res.valueOf())) {
-        await ctx.reply(text.DATE_PARSE_ERROR_MSG)
+        await ctx.reply(ctx.t(`parse-date-error`))
         return
     }
     if (!ctx.session.selectDate) {
@@ -216,11 +213,11 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
     }
     // const diff = differenceInDays(res, ctx.session.selectDate)
     // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(text.DATE_INVALID_ERROR_MSG)
+    //     await ctx.reply(ctx.t(`invalid-date-error`))
     //     return
     // }
 
-    await ctx.reply(text.CREATE_CHAT_MSG, {
+    await ctx.reply(ctx.t(`choose-chat`), {
         reply_markup: {
             one_time_keyboard: true,
             is_persistent: true,
@@ -228,7 +225,7 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
             keyboard: [
                 [
                     {
-                        text: text.SELECT_CHAT_BUTTON,
+                        text: ctx.t(`choose-chat.button`),
                         request_chat: {
                             request_id: Math.floor(Math.random() * 1000),
                             chat_is_channel: false,
@@ -244,7 +241,7 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
 })
 
 router.route('create-chat').on(':chat_shared', async (ctx) => {
-    await ctx.reply(text.CREATE_RULES_MSG, {
+    await ctx.reply(ctx.t(`write-rules`), {
         reply_markup: {
             remove_keyboard: true,
         },
@@ -255,7 +252,7 @@ router.route('create-chat').on(':chat_shared', async (ctx) => {
 
 router.route('create-rules').on('message:text', async (ctx) => {
     const rulesId = ctx.msg.message_id
-    await ctx.reply(text.CREATE_RESTRICTIONS_MSG)
+    await ctx.reply(ctx.t(`write-restrictions`))
     ctx.session.rulesId = rulesId
     ctx.session.state = 'create-restrictions'
 })
@@ -263,17 +260,17 @@ router.route('create-rules').on('message:text', async (ctx) => {
 router.route('create-restrictions').on('message:text', async (ctx) => {
     const restrictions = parseRestrictions(ctx.msg.text)
     if (!restrictions) {
-        await ctx.reply(text.CREATE_RESTRICTIONS_FAILURE_MSG)
+        await ctx.reply(ctx.t(`parse-restrictions-error`))
         return
     }
-    await ctx.reply(text.CREATE_OPTIONS_MSG)
+    await ctx.reply(ctx.t(`choose-create-options`))
     ctx.session.restrictions = restrictions
     ctx.session.state = 'create-additional-options'
 })
 
-router.route('create-additional-options').on('message:text', async (ctx) => {
+router.route('create-additional-options').command('next', async (ctx) => {
     // TODO: Add parsing options
-    ctx.session.options = new Map()
+    // ctx.session.options = new Map()
     // TODO: Validate
     const santa = new SantaModel({
         chat: ctx.session.chatId,
@@ -289,21 +286,21 @@ router.route('create-additional-options').on('message:text', async (ctx) => {
     })
     await santa.save()
     await ctx.reply(
-        text.CREATE_FINISH_MSG(
-            `https://t.me/${ctx.me.username}?start=${santa.id}`
-        )
+        ctx.t(`santa-created`, {
+            link: `https://t.me/${ctx.me.username}?start=${santa.id}`,
+        })
     )
     ctx.session.state = 'start'
 })
 
 router.route('participate-info').on('message:text', async (ctx) => {
-    await ctx.reply(text.PARTICIPATE_OPTIONS_MSG)
+    await ctx.reply(ctx.t(`choose-participate-options`))
     ctx.session.infoId = ctx.msg.message_id
     ctx.session.options = new Map()
     ctx.session.state = 'participate-options'
 })
 
-router.route('participate-options').on('message', async (ctx) => {
+router.route('participate-options').command('next', async (ctx) => {
     // TODO: Validate
     const santa = await SantaModel.findById(ctx.session.santaId)
     if (!santa) {
@@ -313,7 +310,7 @@ router.route('participate-options').on('message', async (ctx) => {
     }
     const participant = new ParticipantModel({
         santa: ctx.session.santaId,
-        user: ctx.from.id,
+        user: ctx.from!.id,
         info: ctx.session.infoId,
         approved: ParticipantStatus.WAITING,
         options: ctx.session.options,
@@ -322,25 +319,25 @@ router.route('participate-options').on('message', async (ctx) => {
     // TODO: Localization
     await ctx.api.sendMessage(
         santa.creator,
-        `New participiant ${ctx.from.first_name} (@${ctx.from.username})`,
+        `New participiant ${ctx.from!.first_name} (@${ctx.from!.username})`,
         {
             reply_markup: {
                 inline_keyboard: [
                     [
                         {
                             text: 'Accept',
-                            callback_data: `accept:${santa.id}:${ctx.from.id}`,
+                            callback_data: `accept:${santa.id}:${ctx.from!.id}`,
                         },
                         {
                             text: 'Reject',
-                            callback_data: `reject:${santa.id}:${ctx.from.id}`,
+                            callback_data: `reject:${santa.id}:${ctx.from!.id}`,
                         },
                     ],
                 ],
             },
         }
     )
-    await ctx.reply(text.PARTICIPATE_SENT_MSG)
+    await ctx.reply(ctx.t(`request-sent`))
     ctx.session.state = 'start'
 })
 
@@ -394,7 +391,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
     }
     participant.choice = `https://shikimori.one/animes/${shikimoriLink}`
     await participant.save()
-    await ctx.reply(text.PARTICIPATE_SELECT_TITLE_SUCCESS_MSG)
+    await ctx.reply(ctx.t(`select-title-success`))
     ctx.session.state = 'start'
 })
 
@@ -417,7 +414,7 @@ router.route('participate-write-review').on('message:text', async (ctx) => {
 
     participant.status = ParticipantStatus.COMPLETED
     await participant.save()
-    await ctx.reply(text.PARTICIPATE_WRITE_REVIEW_SUCCESS_MSG)
+    await ctx.reply(ctx.t(`write-review-success`))
     ctx.session.state = 'start'
 })
 
