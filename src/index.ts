@@ -100,12 +100,12 @@ bot.command('my', async (ctx) => {
                 .map((santa) => `${santa.name} /my${santa.id}`)
                 .join('\n'),
             selecting: participated
-                .filter((santa) => santa.status == ParticipantStatus.APPROVED)
-                .map((santa) => `/choose${santa.id}`)
+                .filter((p) => p.status == ParticipantStatus.APPROVED)
+                .map((p) => `/choose${p.santa}`)
                 .join('\n'),
             reviewing: participated
-                .filter((santa) => santa.status == ParticipantStatus.WATCHING)
-                .map((santa) => `/review${santa.id}`)
+                .filter((p) => p.status == ParticipantStatus.WATCHING)
+                .map((p) => `/review${p.santa}`)
                 .join('\n'),
         })
     )
