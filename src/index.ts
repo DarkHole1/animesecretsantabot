@@ -121,7 +121,7 @@ const commands = new CommandGroup<MyContext>()
 
 commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     const id = ctx.msg.text.slice('/choose'.length)
-    const participant = await ParticipantModel.find({
+    const participant = await ParticipantModel.findOne({
         santa: id,
         user: ctx.from!.id,
         status: ParticipantStatus.APPROVED,
@@ -139,7 +139,7 @@ commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
 
 commands.command(/review(.+)/, 'Review anime', async (ctx) => {
     const id = ctx.msg.text.slice('/review'.length)
-    const participant = await ParticipantModel.find({
+    const participant = await ParticipantModel.findOne({
         santa: id,
         user: ctx.from!.id,
         status: ParticipantStatus.WATCHING,
