@@ -54,12 +54,12 @@ const superAdminId = (config.Telegram as JsonMap).super_admin_id as number
 mongoose.connect((config.MongoDB as JsonMap).uri as string)
 
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
-bot.use(
-    new I18n({
-        defaultLocale: 'ru',
-        directory: 'locales',
-    })
-)
+// TODO: Save locale for user
+const i18n = new I18n({
+    defaultLocale: 'ru',
+    directory: 'locales',
+})
+bot.use(i18n)
 
 bot.command('start', async (ctx) => {
     if (ctx.match) {
@@ -130,8 +130,7 @@ commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
 
     ctx.session.santaId = id
     ctx.session.state = 'participate-select-title'
-    // TODO: Localize
-    await ctx.reply(`Select title`)
+    await ctx.reply(ctx.t(`select-title`))
 })
 
 commands.command(/review(.+)/, 'Review anime', async (ctx) => {
@@ -149,8 +148,7 @@ commands.command(/review(.+)/, 'Review anime', async (ctx) => {
 
     ctx.session.santaId = id
     ctx.session.state = 'participate-write-review'
-    // TODO: Localize
-    await ctx.reply(`Write review`)
+    await ctx.reply(ctx.t(`write-review`))
 })
 
 bot.use(commands)
@@ -316,20 +314,24 @@ router.route('participate-options').command('next', async (ctx) => {
         options: ctx.session.options,
     })
     await participant.save()
-    // TODO: Localization
     await ctx.api.sendMessage(
         santa.creator,
-        `New participiant ${ctx.from!.first_name} (@${ctx.from!.username})`,
+        ctx.t(`new-request`, {
+            name: [ctx.from!.first_name, ctx.from!.first_name]
+                .filter(Boolean)
+                .join(' '),
+            username: `@${ctx.from!.username}`,
+        }),
         {
             reply_markup: {
                 inline_keyboard: [
                     [
                         {
-                            text: 'Accept',
+                            text: ctx.t(`new-request.accept`),
                             callback_data: `accept:${santa.id}:${ctx.from!.id}`,
                         },
                         {
-                            text: 'Reject',
+                            text: ctx.t(`new-request.reject`),
                             callback_data: `reject:${santa.id}:${ctx.from!.id}`,
                         },
                     ],
@@ -376,8 +378,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
     // TODO: Add restrictions to santa
     const valid = await checkShikimoriRestrictions(shikimoriLink, [])
     if (!valid) {
-        // TODO: Localize:
-        await ctx.reply(`You shall not pass`)
+        await ctx.reply(ctx.t(`restrictions-check-failed`))
         return
     }
 
@@ -397,8 +398,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
 
 router.route('participate-write-review').on('message:text', async (ctx) => {
     if (ctx.msg.text.split(/\s+/).length < 50) {
-        // TODO: Localize
-        await ctx.reply(`Too short`)
+        await ctx.reply(ctx.t(`review-check-failed`))
         return
     }
     const santa = await SantaModel.findById(ctx.session.santaId)
@@ -430,8 +430,7 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
     })
 
     if (!participant) {
-        // TODO: Localize
-        await ctx.answerCallbackQuery(`No such user`)
+        await ctx.answerCallbackQuery(ctx.t(`participant-not-found.short`))
         return
     }
 
@@ -442,12 +441,13 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
     }
 
     await participant.save()
-    // TODO: Localize
     await ctx.api.sendMessage(
         participant.user,
-        `Your application was ${choice}`
+        ctx.t(`request-answer`, {
+            status: choice,
+        })
     )
-    await ctx.answerCallbackQuery(`Succesfully changed user status`)
+    await ctx.answerCallbackQuery(ctx.t(`request-answer.success`))
 })
 
 bot.use(router)
@@ -485,10 +485,11 @@ const job = CronJob.from({
                 for (let i = 0; i < shuffledParticipants.length; i++) {
                     const current = participants[i]
                     const next = participants[(i + 1) % participants.length]
-                    // TODO: Localize
                     await bot.api.sendMessage(
                         current.user,
-                        `Please select anime for your ward, his wishes:`
+                        i18n.t(`ru`, `ward-selected`, {
+                            command: `/choose${startedSanta.id}`,
+                        })
                     )
                     await bot.api.copyMessage(
                         current.user,
@@ -514,12 +515,12 @@ const job = CronJob.from({
                         // TODO: Send error message
                         continue
                     }
-                    // TODO: Localize
                     await bot.api.sendMessage(
                         to.user,
-                        `Your santa selected: ${participant.choice!}. Keep calm and write review before ${
-                            selectedSanta.deadlineDate
-                        }.`
+                        i18n.t(`ru`, `title-selected`, {
+                            link: participant.choice!,
+                            deadline: selectedSanta.deadlineDate,
+                        })
                     )
                     to.status = ParticipantStatus.WATCHING
                     await to.save()
@@ -533,15 +534,16 @@ const job = CronJob.from({
                     status: ParticipantStatus.WATCHING,
                 })
 
-                // TODO: Localize
                 await bot.api.sendMessage(
                     deadlineSanta.chat ?? deadlineSanta.creator,
-                    `Santa ended, bad users: ${participants.length}`
+                    i18n.t(`ru`, `santa-ended`, {
+                        badUsers: participants.length,
+                    })
                 )
             }
         } catch (e) {
             console.log(e)
-            await bot.api.sendMessage(superAdminId, `Error: ${e}`)
+            await bot.api.sendMessage(superAdminId, i18n.t(`ru`, `santa-ended`))
         }
     },
 })
