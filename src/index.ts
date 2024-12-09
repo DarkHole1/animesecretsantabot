@@ -95,15 +95,19 @@ bot.command('my', async (ctx) => {
     })
 
     await ctx.reply(
-        `Created:\n${created
-            .map((santa) => `${santa.name} /my${santa.id}`)
-            .join('\n')}\nSelecting title:\n${participated
-            .filter((santa) => santa.status == ParticipantStatus.APPROVED)
-            .map((santa) => `/choose${santa.id}`)
-            .join('\n')}\nWrite a review:\n${participated
-            .filter((santa) => santa.status == ParticipantStatus.WATCHING)
-            .map((santa) => `/review${santa.id}`)
-            .join('\n')}`
+        ctx.t(`santas-of-user`, {
+            created: created
+                .map((santa) => `${santa.name} /my${santa.id}`)
+                .join('\n'),
+            selecting: participated
+                .filter((santa) => santa.status == ParticipantStatus.APPROVED)
+                .map((santa) => `/choose${santa.id}`)
+                .join('\n'),
+            reviewing: participated
+                .filter((santa) => santa.status == ParticipantStatus.WATCHING)
+                .map((santa) => `/review${santa.id}`)
+                .join('\n'),
+        })
     )
 })
 

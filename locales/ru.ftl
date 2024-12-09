@@ -77,6 +77,14 @@ request-answer =
     }.
     .success = Успешно обработали заявку
 
+santas-of-user =
+    Созданные:
+    { $created }
+    Готовые для выбора тайтла:
+    { $selecting }
+    Готовые для написания отзыва:
+    { $reviewing }
+
 restrictions-check-failed =
     Ваш тайтл не подходит под ограничения. Проверьте ещё раз
 
