@@ -365,22 +365,21 @@ router.route('participate-select-title').on('message', async (ctx) => {
         return parseInt(match[1])
     })
     if (animeLinks.length <= 0) {
-        // TODO: Error message
+        ctx.reply(ctx.t(`anime-link-not-found`))
         return
     }
     if (animeLinks.length > 1) {
-        // TODO: Error message
+        ctx.reply(ctx.t(`too-many-links-error`))
         return
     }
     const shikimoriLink = animeLinks[0]
     const santa = await SantaModel.findById(ctx.session.santaId)
     if (!santa) {
-        // TODO: Error message
+        ctx.reply(ctx.t(`general-error`))
         ctx.session.state = 'start'
         return
     }
-    // TODO: Add restrictions to santa
-    const valid = await checkShikimoriRestrictions(shikimoriLink, [])
+    const valid = await checkShikimoriRestrictions(shikimoriLink, santa.restrictions)
     if (!valid) {
         await ctx.reply(ctx.t(`restrictions-check-failed`))
         return
@@ -391,7 +390,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
         santa: ctx.session.santaId,
     })
     if (!participant) {
-        // TODO: Error message
+        ctx.reply(ctx.t(`general-error`))
         return
     }
     participant.choice = `https://shikimori.one/animes/${shikimoriLink}`
