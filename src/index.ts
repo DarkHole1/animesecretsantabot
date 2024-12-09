@@ -375,6 +375,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
     const shikimoriLink = animeLinks[0]
     const santa = await SantaModel.findById(ctx.session.santaId)
     if (!santa) {
+        console.log(ctx.session)
         ctx.reply(ctx.t(`general-error`))
         ctx.session.state = 'start'
         return
@@ -390,6 +391,7 @@ router.route('participate-select-title').on('message', async (ctx) => {
         santa: ctx.session.santaId,
     })
     if (!participant) {
+        console.log(ctx.session)
         ctx.reply(ctx.t(`general-error`))
         return
     }
