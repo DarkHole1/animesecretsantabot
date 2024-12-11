@@ -120,20 +120,34 @@ const commands = new CommandGroup<MyContext>()
 
 commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     const id = ctx.msg.text.slice('/choose'.length)
+    const santa = await SantaModel.findById(id)
     const participant = await ParticipantModel.findOne({
         santa: id,
         user: ctx.from!.id,
         status: ParticipantStatus.APPROVED,
     })
 
-    if (!participant) {
-        // TODO: Error message
+    if (!santa || !participant) {
+        await ctx.reply(ctx.t(`general-error`))
+        return
+    }
+
+    const to = santa.pairing.get(participant.id)
+    if (!to) {
+        await ctx.reply(ctx.t(`general-error`))
+        return
+    }
+
+    const toFound = await ParticipantModel.findById(to)
+    if (!toFound) {
+        await ctx.reply(ctx.t(`general-error`))
         return
     }
 
     ctx.session.santaId = id
     ctx.session.state = 'participate-select-title'
     await ctx.reply(ctx.t(`select-title`))
+    await ctx.api.copyMessage(ctx.msg.from!.id, toFound.user, toFound.info)
 })
 
 commands.command(/review(.+)/, 'Review anime', async (ctx) => {
