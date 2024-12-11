@@ -272,7 +272,7 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
 
 router.route('create-additional-options').command('next', async (ctx) => {
     // TODO: Add parsing options
-    // ctx.session.options = new Map()
+    ctx.session.options = new Map()
     // TODO: Validate
     const santa = new SantaModel({
         chat: ctx.session.chatId,
