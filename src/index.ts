@@ -69,7 +69,7 @@ bot.command('start', async (ctx) => {
             return
         }
         await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
-        await ctx.reply(ctx.t(`write-wishes`))
+        await ctx.reply(ctx.t(`write-wish`))
         // TODO: Prevent secondary registration
         ctx.session.santaId = ctx.match
         ctx.session.state = 'participate-info'
