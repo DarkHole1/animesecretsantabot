@@ -50,7 +50,6 @@ export const checkShikimoriRestrictions = async (
         query: queryShikimori,
         variables: { ids: id.toString() },
     })
-    console.log(res.data)
     const title = res.data.data?.animes?.at(0)
     if (!title) {
         return false

@@ -69,8 +69,7 @@ bot.command('start', async (ctx) => {
             return
         }
         await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
-        // TODO: Add info message
-        await ctx.reply(`HELLO`)
+        await ctx.reply(ctx.t(`write-wishes`))
         // TODO: Prevent secondary registration
         ctx.session.santaId = ctx.match
         ctx.session.state = 'participate-info'
@@ -380,7 +379,10 @@ router.route('participate-select-title').on('message', async (ctx) => {
         ctx.session.state = 'start'
         return
     }
-    const valid = await checkShikimoriRestrictions(shikimoriLink, santa.restrictions)
+    const valid = await checkShikimoriRestrictions(
+        shikimoriLink,
+        santa.restrictions
+    )
     if (!valid) {
         await ctx.reply(ctx.t(`restrictions-check-failed`))
         return
