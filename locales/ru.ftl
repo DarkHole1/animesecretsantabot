@@ -135,3 +135,9 @@ anime-link-not-found =
 
 too-many-links-error =
     В вашем сообщении слишком много ссылок, не могу понять которая из них нужна.
+
+santa-started-error =
+    К сожалению вы опоздали, этот Санта уже начался.
+
+already-registered-error =
+    Вы уже зарегистрированы

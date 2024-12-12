@@ -2,7 +2,7 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import { differenceInDays, parse, startOfDay } from 'date-fns'
+import { compareAsc, differenceInDays, isEqual, parse, startOfDay } from 'date-fns'
 import {
     checkShikimoriRestrictions,
     parseRestrictions,
@@ -68,9 +68,19 @@ bot.command('start', async (ctx) => {
             await ctx.reply(ctx.t(`santa-not-found-error`))
             return
         }
+        if (compareAsc(santa.startDate, new Date()) <= 0) {
+            await ctx.reply(ctx.t(`santa-started-error`))
+            return
+        }
+        if (await ParticipantModel.findOne({
+            user: ctx.msg.from!.id,
+            santa: santa.id
+        })) {
+            await ctx.reply(ctx.t(`already-registered-error`))
+            return
+        }
         await ctx.api.copyMessage(ctx.chatId, santa.creator, santa.rules)
         await ctx.reply(ctx.t(`write-wish`))
-        // TODO: Prevent secondary registration
         ctx.session.santaId = ctx.match
         ctx.session.state = 'participate-info'
     } else {
