@@ -2,7 +2,13 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import { compareAsc, differenceInDays, isEqual, parse, startOfDay } from 'date-fns'
+import {
+    compareAsc,
+    differenceInDays,
+    isEqual,
+    parse,
+    startOfDay,
+} from 'date-fns'
 import {
     checkShikimoriRestrictions,
     parseRestrictions,
@@ -51,6 +57,18 @@ const config = toml.parse(readFileSync('config.toml', 'utf-8'))
 const bot = new Bot<MyContext>((config.Telegram as JsonMap).token as string)
 const superAdminId = (config.Telegram as JsonMap).super_admin_id as number
 
+bot.catch(async (err) => {
+    const ctx = err.ctx
+    try {
+        await ctx.api.sendMessage(
+            superAdminId,
+            `Error: ${err.toString()}\n${err.stack}`
+        )
+    } catch (e) {
+        console.log(e)
+    }
+})
+
 mongoose.connect((config.MongoDB as JsonMap).uri as string)
 
 bot.use(session({ initial: (): SessionData => ({ state: 'start' }) }))
@@ -72,10 +90,12 @@ bot.command('start', async (ctx) => {
             await ctx.reply(ctx.t(`santa-started-error`))
             return
         }
-        if (await ParticipantModel.findOne({
-            user: ctx.msg.from!.id,
-            santa: santa.id
-        })) {
+        if (
+            await ParticipantModel.findOne({
+                user: ctx.msg.from!.id,
+                santa: santa.id,
+            })
+        ) {
             await ctx.reply(ctx.t(`already-registered-error`))
             return
         }
