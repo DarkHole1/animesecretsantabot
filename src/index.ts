@@ -2,13 +2,7 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import {
-    compareAsc,
-    differenceInDays,
-    isEqual,
-    parse,
-    startOfDay,
-} from 'date-fns'
+import { compareAsc, differenceInDays, parse, startOfDay } from 'date-fns'
 import {
     checkShikimoriRestrictions,
     parseRestrictions,
@@ -46,6 +40,7 @@ type SessionData = {
     restrictions?: Restriction[]
 
     santaId?: string
+    participantId?: string
     infoId?: number
 
     options?: Map<string, boolean>
@@ -175,6 +170,7 @@ commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     }
 
     ctx.session.santaId = id
+    ctx.session.participantId = participant.id
     ctx.session.state = 'participate-select-title'
     await ctx.reply(ctx.t(`select-title`))
     await ctx.api.copyMessage(ctx.msg.from!.id, toFound.user, toFound.info)
@@ -189,11 +185,12 @@ commands.command(/review(.+)/, 'Review anime', async (ctx) => {
     })
 
     if (!participant) {
-        // TODO: Error message
+        await ctx.reply(ctx.t(`not-a-participant-error`))
         return
     }
 
     ctx.session.santaId = id
+    ctx.session.participantId = participant.id
     ctx.session.state = 'participate-write-review'
     await ctx.reply(ctx.t(`write-review`))
 })
@@ -231,15 +228,16 @@ router.route('create-select-date').on('message:text', async (ctx) => {
         return
     }
     if (!ctx.session.startDate) {
-        // TODO: Add message
+        await ctx.reply(ctx.t(`time-travel-error`))
+        await ctx.reply(ctx.t(`choose-start-date`))
         ctx.session.state = 'create-start-date'
         return
     }
     const diff = differenceInDays(res, ctx.session.startDate)
-    // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(ctx.t(`invalid-date-error`))
-    //     return
-    // }
+    if (diff < 2 || diff > 31) {
+        await ctx.reply(ctx.t(`invalid-date-error`))
+        return
+    }
     await ctx.reply(ctx.t(`choose-deadline-date`))
     ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
@@ -252,15 +250,16 @@ router.route('create-deadline-date').on('message:text', async (ctx) => {
         return
     }
     if (!ctx.session.selectDate) {
-        // TODO: Add message
+        await ctx.reply(ctx.t(`time-travel-error`))
+        await ctx.reply(ctx.t(`choose-select-date`))
         ctx.session.state = 'create-select-date'
         return
     }
-    // const diff = differenceInDays(res, ctx.session.selectDate)
-    // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(ctx.t(`invalid-date-error`))
-    //     return
-    // }
+    const diff = differenceInDays(res, ctx.session.selectDate)
+    if (diff < 2 || diff > 31) {
+        await ctx.reply(ctx.t(`invalid-date-error`))
+        return
+    }
 
     await ctx.reply(ctx.t(`choose-chat`), {
         reply_markup: {
@@ -349,7 +348,7 @@ router.route('participate-options').command('next', async (ctx) => {
     // TODO: Validate
     const santa = await SantaModel.findById(ctx.session.santaId)
     if (!santa) {
-        // TODO: Error message
+        await ctx.reply(ctx.t(`general-error`))
         ctx.session.state = 'start'
         return
     }
@@ -458,7 +457,8 @@ router.route('participate-write-review').on('message:text', async (ctx) => {
         santa: ctx.session.santaId,
     })
     if (!participant || !santa) {
-        // TODO: Error
+        await ctx.reply(ctx.t(`general-error`))
+        ctx.session.state = 'start'
         return
     }
     await ctx.forwardMessage(santa.chat ?? santa.creator)
@@ -520,9 +520,13 @@ const job = CronJob.from({
                     santa: startedSanta.id,
                     status: ParticipantStatus.APPROVED,
                 })
-                if (participants.length <= 2) {
-                    // TODO: Delete santa without users
-                    // continue
+                if (participants.length < 2) {
+                    await bot.api.sendMessage(
+                        startedSanta.creator,
+                        i18n.t(`ru`, `not-enough-participants`)
+                    )
+                    await startedSanta.deleteOne()
+                    continue
                 }
                 const shuffledParticipants = _.shuffle(participants)
                 const pairing = new Map<string, string>()
@@ -563,7 +567,10 @@ const job = CronJob.from({
                         selectedSanta.pairing.get(participant.id!.toString())
                     )
                     if (!to) {
-                        // TODO: Send error message
+                        await bot.api.sendMessage(
+                            superAdminId,
+                            i18n.t(`ru`, `general-error`)
+                        )
                         continue
                     }
                     await bot.api.sendMessage(

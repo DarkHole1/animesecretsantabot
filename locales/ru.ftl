@@ -109,10 +109,16 @@ santa-ended =
         *[other] но было всего лишь { $badUsers } пользователей, не успевших написать отзыв до конца.
     }
 
+not-enough-participants =
+    Недостаточно участников для мероприятия. Санта был удален
+
 general-error =
     Unable to process information
     Error NULL has been executed
     Your memory will be overwritten
+
+time-travel-error =
+    You broke the fabric of reality
 
 parse-date-error =
     А не ошиблись ли вы с форматом даты часом? Надо строго ДД.ММ.ГГГГ. Попробуйте ещё раз...
@@ -141,3 +147,6 @@ santa-started-error =
 
 already-registered-error =
     Вы уже зарегистрированы
+
+not-a-participant-error =
+    Похоже вы не участник этого санты
