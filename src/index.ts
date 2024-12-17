@@ -363,7 +363,7 @@ router.route('participate-options').command('next', async (ctx) => {
     await ctx.api.sendMessage(
         santa.creator,
         ctx.t(`new-request`, {
-            name: [ctx.from!.first_name, ctx.from!.first_name]
+            name: [ctx.from!.first_name, ctx.from!.last_name]
                 .filter(Boolean)
                 .join(' '),
             username: `@${ctx.from!.username}`,
