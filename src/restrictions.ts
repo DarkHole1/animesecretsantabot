@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // TODO: Add status restriction
 export type Restriction = {
-    type: 'score' | 'episodes' | 'duration'
+    type: 'score' | 'episodes' | 'duration' | 'full_duration'
     operator: '>' | '<'
     value: number
 }
@@ -10,7 +10,7 @@ export const parseRestrictions = (text: string): Restriction[] | null => {
     const lines = text.split('\n')
     const parsedLines = lines.map((line) => {
         const match = line.match(
-            /(score|episodes|duration)(<|>)(\d+(?:\.\d+)?)/
+            /(score|episodes|duration|full_duration)(<|>)(\d+(?:\.\d+)?)/
         )
         if (!match) {
             return null
@@ -106,6 +106,23 @@ export const checkShikimoriRestrictions = async (
                         'duration mismatch',
                         restriction.operator,
                         title.duration,
+                        restriction.value
+                    )
+                    return false
+                }
+                break
+            case 'full_duration':
+                if (
+                    !execOp(
+                        restriction.operator,
+                        title.duration * title.episodes,
+                        restriction.value
+                    )
+                ) {
+                    console.log(
+                        'full_duration mismatch',
+                        restriction.operator,
+                        title.duration * title.episodes,
                         restriction.value
                     )
                     return false
