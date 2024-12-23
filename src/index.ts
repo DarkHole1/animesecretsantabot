@@ -15,6 +15,7 @@ import { CronJob } from 'cron'
 import _ from 'underscore'
 import { CommandGroup } from '@grammyjs/commands'
 import { I18n, I18nFlavor } from '@grammyjs/i18n'
+import { autoRetry } from '@grammyjs/auto-retry'
 
 type SessionData = {
     state:
@@ -73,6 +74,7 @@ const i18n = new I18n({
     directory: 'locales',
 })
 bot.use(i18n)
+bot.api.config.use(autoRetry())
 
 bot.command('start', async (ctx) => {
     if (ctx.match) {
