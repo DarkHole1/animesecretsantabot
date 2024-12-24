@@ -144,7 +144,7 @@ bot.command('cancel', (ctx) => {
 const commands = new CommandGroup<MyContext>()
 
 commands.command(/my(.+)/, 'My santa', async (ctx) => {
-    const id = ctx.msg.text.slice('/choose'.length)
+    const id = ctx.msg.text.slice('/my'.length)
     const santa = await SantaModel.findById(id)
     if (!santa) {
         await ctx.reply(ctx.t(`general-error`))
