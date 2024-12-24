@@ -175,7 +175,7 @@ commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     ctx.session.participantId = participant.id
     ctx.session.state = 'participate-select-title'
     await ctx.reply(ctx.t(`select-title`))
-    await ctx.api.copyMessage(ctx.msg.from!.id, toFound.user, toFound.info)
+    await ctx.api.forwardMessage(ctx.msg.from!.id, toFound.user, toFound.info)
 })
 
 commands.command(/review(.+)/, 'Review anime', async (ctx) => {
