@@ -2,8 +2,8 @@ import { DocumentType, getModelForClass, prop } from '@typegoose/typegoose'
 import { Restriction as RealRestriction } from '../restrictions'
 
 class Restriction implements RealRestriction {
-    @prop({ required: true, enum: ['score', 'episodes', 'duration'] })
-    type!: 'score' | 'episodes' | 'duration'
+    @prop({ required: true, enum: ['score', 'episodes', 'duration', 'full_duration'] })
+    type!: 'score' | 'episodes' | 'duration' | 'full_duration'
     @prop({ required: true, enum: ['>', '<'] })
     operator!: '>' | '<'
     @prop({ required: true })
