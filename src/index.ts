@@ -12,7 +12,7 @@ import { SantaModel } from './models/Santa'
 import mongoose from 'mongoose'
 import { ParticipantModel, ParticipantStatus } from './models/Participant'
 import { CronJob } from 'cron'
-import _ from 'underscore'
+import shuffle from 'lodash.shuffle'
 import { CommandGroup } from '@grammyjs/commands'
 import { I18n, I18nFlavor } from '@grammyjs/i18n'
 import { autoRetry } from '@grammyjs/auto-retry'
@@ -573,7 +573,7 @@ const job = CronJob.from({
                     await startedSanta.deleteOne()
                     continue
                 }
-                const shuffledParticipants = _.shuffle(participants)
+                const shuffledParticipants = shuffle(participants)
                 const pairing = new Map<string, string>()
                 for (let i = 0; i < shuffledParticipants.length; i++) {
                     const current = participants[i]
