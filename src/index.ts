@@ -141,9 +141,52 @@ bot.command('cancel', (ctx) => {
     ctx.session.state = 'start'
 })
 
-// TODO: my + id command
-
 const commands = new CommandGroup<MyContext>()
+
+commands.command(/my(.+)/, 'My santa', async (ctx) => {
+    const id = ctx.msg.text.slice('/choose'.length)
+    const santa = await SantaModel.findById(id)
+    if (!santa) {
+        await ctx.reply(ctx.t(`general-error`))
+        return
+    }
+    const totalParticipants = await ParticipantModel.countDocuments({
+        santa: id,
+        status: {
+            $or: [
+                ParticipantStatus.APPROVED,
+                ParticipantStatus.WATCHING,
+                ParticipantStatus.COMPLETED,
+            ],
+        },
+    })
+    const waitingParticipants = await ParticipantModel.countDocuments({
+        santa: id,
+        status: ParticipantStatus.WAITING,
+    })
+    const titleSelectedParticipants = await ParticipantModel.countDocuments({
+        santa: id,
+        choice: { $exists: true },
+    })
+    const reviewedParticipants = await ParticipantModel.countDocuments({
+        santa: id,
+        status: ParticipantStatus.COMPLETED,
+    })
+
+    await ctx.reply(
+        ctx.t(`santa-info`, {
+            title: santa.name,
+            startDate: santa.startDate,
+            selectDate: santa.selectDate,
+            deadlineDate: santa.deadlineDate,
+            chatId: santa.chat ?? '',
+            totalParticipants,
+            waitingParticipants,
+            titleSelectedParticipants,
+            reviewedParticipants,
+        })
+    )
+})
 
 commands.command(/choose(.+)/, 'Choose anime', async (ctx) => {
     const id = ctx.msg.text.slice('/choose'.length)

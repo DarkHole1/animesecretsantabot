@@ -55,6 +55,17 @@ choose-participate-options =
 request-sent =
     Вы успешно отправили заявку! Когда создатель одобрит её, то вам придёт сообщение
 
+santa-info =
+    Название: { $title }
+    Дата начала: { $startDate }
+    Дата выбора: { $selectDate }
+    Дедлайн: { $deadlineDate }
+    Чат: { $chatId }
+    Участников: { $totalParticipants }
+    Ждущих одобрения: { $waitingParticipants }
+    Выбравших тайтл: { $titleSelectedParticipants }
+    Написавших отзыв: { $reviewedParticipants }
+
 select-title =
     Выберите подходящий тайтл и отправьте мне ссылку на него, но не забывайте про ограничения
 
