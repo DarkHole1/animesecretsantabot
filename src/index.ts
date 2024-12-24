@@ -153,7 +153,7 @@ commands.command(/my(.+)/, 'My santa', async (ctx) => {
     const totalParticipants = await ParticipantModel.countDocuments({
         santa: id,
         status: {
-            $or: [
+            $in: [
                 ParticipantStatus.APPROVED,
                 ParticipantStatus.WATCHING,
                 ParticipantStatus.COMPLETED,
