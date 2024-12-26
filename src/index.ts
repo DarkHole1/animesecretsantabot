@@ -2,7 +2,13 @@ import { Bot, Context, session, SessionFlavor } from 'grammy'
 import { readFileSync } from 'fs'
 import toml, { JsonMap } from '@iarna/toml'
 import { Router } from '@grammyjs/router'
-import { compareAsc, differenceInDays, parse, startOfDay } from 'date-fns'
+import {
+    compareAsc,
+    differenceInDays,
+    parse,
+    startOfToday,
+    startOfYesterday,
+} from 'date-fns'
 import {
     checkShikimoriRestrictions,
     parseRestrictions,
@@ -552,9 +558,13 @@ const job = CronJob.from({
     cronTime: '0 10 * * *',
     onTick: async () => {
         try {
-            const today = startOfDay(new Date())
+            const today = startOfToday()
+            const yesterday = startOfYesterday()
             const started = await SantaModel.find({ startDate: today })
             // TODO: Add reminders
+            const selectedReminder = await SantaModel.find({
+                selectDate: yesterday,
+            })
             const selected = await SantaModel.find({ selectDate: today })
             const deadlined = await SantaModel.find({ deadlineDate: today })
 
@@ -594,6 +604,21 @@ const job = CronJob.from({
                         current.user,
                         next.user,
                         next.info
+                    )
+                }
+            }
+
+            for (const selectedReminderSanta of selectedReminder) {
+                const participants = await ParticipantModel.find({
+                    santa: selectedReminderSanta.id,
+                    status: ParticipantStatus.APPROVED,
+                    choice: { $exists: false },
+                })
+
+                for (const participant of participants) {
+                    await bot.api.sendMessage(
+                        participant.user,
+                        i18n.t(`ru`, `selected-reminder`)
                     )
                 }
             }
