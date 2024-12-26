@@ -558,7 +558,6 @@ const job = CronJob.from({
             const selected = await SantaModel.find({ selectDate: today })
             const deadlined = await SantaModel.find({ deadlineDate: today })
 
-            // TODO: Auto retry
             for (const startedSanta of started) {
                 // TODO: Send waiting messages
                 const participants = await ParticipantModel.find({
