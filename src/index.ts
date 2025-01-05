@@ -585,8 +585,8 @@ const job = CronJob.from({
                 const shuffledParticipants = shuffle(participants)
                 const pairing = new Map<string, string>()
                 for (let i = 0; i < shuffledParticipants.length; i++) {
-                    const current = participants[i]
-                    const next = participants[(i + 1) % participants.length]
+                    const current = shuffledParticipants[i]
+                    const next = shuffledParticipants[(i + 1) % shuffledParticipants.length]
                     pairing.set(current.id!.toString(), next.id!.toString())
                 }
                 startedSanta.pairing = pairing
