@@ -555,7 +555,7 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
 bot.use(router)
 
 const job = CronJob.from({
-    cronTime: '30 15 * * *',
+    cronTime: '15 10 * * *',
     onTick: async () => {
         try {
             const today = startOfToday()
