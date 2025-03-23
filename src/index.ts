@@ -371,6 +371,7 @@ router.route('create-additional-options').command('next', async (ctx) => {
         chat: ctx.session.chatId,
         creator: ctx.chatId,
         name: ctx.session.name,
+        status: 'not-started',
         deadlineDate: ctx.session.deadlineDate,
         selectDate: ctx.session.selectDate,
         startDate: ctx.session.startDate,
@@ -555,20 +556,32 @@ bot.callbackQuery(/^(accept|reject):(.+?):(.+?)$/, async (ctx) => {
 bot.use(router)
 
 const job = CronJob.from({
-    cronTime: '15 10 * * *',
+    cronTime: '0 * * * *',
     onTick: async () => {
         try {
             const today = startOfToday()
             const yesterday = startOfYesterday()
-            const started = await SantaModel.find({ startDate: today })
+            const started = await SantaModel.find({ 
+                startDate: { $lte: new Date() }, 
+                status: 'not-started' 
+            })
             // TODO: Add reminders
             const selectedReminder = await SantaModel.find({
-                selectDate: yesterday,
+                selectDate: yesterday, // WTF maybe tomorrow?
             })
-            const selected = await SantaModel.find({ selectDate: today })
-            const deadlined = await SantaModel.find({ deadlineDate: today })
+            const selected = await SantaModel.find({ 
+                selectDate: { $lte: new Date() },
+                status: 'started',
+            })
+            const deadlined = await SantaModel.find({
+                deadlineDate: { $lte: new Date() },
+                status: 'watching',
+            })
 
             for (const startedSanta of started) {
+                startedSanta.status = 'started'
+                await startedSanta.save()
+
                 // TODO: Send waiting messages
                 const participants = await ParticipantModel.find({
                     santa: startedSanta.id,
@@ -624,6 +637,9 @@ const job = CronJob.from({
             }
 
             for (const selectedSanta of selected) {
+                selectedSanta.status = 'watching'
+                await selectedSanta.save()
+
                 // TODO: Send warning messages to whom not selected
                 const participants = await ParticipantModel.find({
                     santa: selectedSanta.id,
@@ -655,6 +671,8 @@ const job = CronJob.from({
             }
 
             for (const deadlineSanta of deadlined) {
+                deadlineSanta.status = 'ended'
+                await deadlineSanta.save()
                 // TODO: Warn participants
                 const participants = await ParticipantModel.find({
                     santa: deadlineSanta.id,
@@ -670,7 +688,7 @@ const job = CronJob.from({
             }
         } catch (e) {
             console.log(e)
-            await bot.api.sendMessage(superAdminId, i18n.t(`ru`, `santa-ended`))
+            await bot.api.sendMessage(superAdminId, i18n.t(`ru`, `general-error`))
         }
     },
 })

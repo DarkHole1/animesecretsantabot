@@ -17,6 +17,9 @@ class Santa {
     @prop({ required: true })
     name!: string
 
+    @prop({ required: true, enum: ['not_started', 'started', 'watching', 'ended'] })
+    status!: 'not_started' | 'started' | 'watching' | 'ended'
+
     @prop({ required: true })
     startDate!: Date
 
