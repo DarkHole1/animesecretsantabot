@@ -26,8 +26,8 @@ class Santa {
     @prop({ required: true })
     selectDate!: Date
 
-    @prop({ required: true })
-    deadlineDate!: Date
+    @prop()
+    deadlineDate?: Date
 
     @prop({ required: true })
     rules!: number

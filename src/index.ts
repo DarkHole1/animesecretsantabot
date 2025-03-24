@@ -184,7 +184,7 @@ commands.command(/my(.+)/, 'My santa', async (ctx) => {
             title: santa.name,
             startDate: santa.startDate,
             selectDate: santa.selectDate,
-            deadlineDate: santa.deadlineDate,
+            deadlineDate: santa.deadlineDate ?? '',
             chatId: santa.chat ?? '',
             totalParticipants,
             waitingParticipants,
@@ -282,6 +282,30 @@ router.route('create-select-date').on('message:text', async (ctx) => {
     await ctx.reply(ctx.t(`choose-deadline-date`))
     ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
+})
+
+router.route('create-deadline-date').command('next', async (ctx) => {
+    await ctx.reply(ctx.t(`choose-chat`), {
+        reply_markup: {
+            one_time_keyboard: true,
+            is_persistent: true,
+            resize_keyboard: true,
+            keyboard: [
+                [
+                    {
+                        text: ctx.t(`choose-chat.button`),
+                        request_chat: {
+                            request_id: Math.floor(Math.random() * 1000),
+                            chat_is_channel: false,
+                            bot_is_member: true,
+                        },
+                    },
+                ],
+            ],
+        },
+    })
+    ctx.session.deadlineDate = undefined
+    ctx.session.state = 'create-chat'
 })
 
 router.route('create-deadline-date').on('message:text', async (ctx) => {
@@ -681,7 +705,7 @@ const job = CronJob.from({
                         to.user,
                         i18n.t(`ru`, `title-selected`, {
                             link: participant.choice!,
-                            deadline: selectedSanta.deadlineDate,
+                            deadline: selectedSanta.deadlineDate ?? '',
                         })
                     )
                     to.status = ParticipantStatus.WATCHING
