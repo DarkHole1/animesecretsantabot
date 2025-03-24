@@ -284,7 +284,9 @@ router.route('create-select-date').on('message:text', async (ctx) => {
     ctx.session.state = 'create-deadline-date'
 })
 
-router.route('create-deadline-date').command('next', async (ctx) => {
+const deadlineDateRoute = router.route('create-deadline-date')
+
+deadlineDateRoute.command('next', async (ctx) => {
     await ctx.reply(ctx.t(`choose-chat`), {
         reply_markup: {
             one_time_keyboard: true,
@@ -308,7 +310,7 @@ router.route('create-deadline-date').command('next', async (ctx) => {
     ctx.session.state = 'create-chat'
 })
 
-router.route('create-deadline-date').on('message:text', async (ctx) => {
+deadlineDateRoute.on('message:text', async (ctx) => {
     const res = parse(ctx.msg.text, `dd.MM.yyyy HH:mm`, new Date())
     if (isNaN(res.valueOf())) {
         await ctx.reply(ctx.t(`parse-date-error`))
@@ -378,29 +380,15 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
     ctx.session.options = new Map()
 })
 
-router
-    .route('create-additional-options')
-    .command('auto_accept', async (ctx) => {
-        ctx.session.options?.set(
-            'auto_accept',
-            !(ctx.session.options?.get('auto_accept') ?? false)
-        )
-        await ctx.reply(
-            ctx.t(`create-options-success`, {
-                options: Array.from(ctx.session.options?.entries() ?? [])
-                    .flatMap(([k, v]) => (v ? [k] : []))
-                    .join('\n'),
-            })
-        )
-    })
+const createAdditionalOptionsRoute = router.route('create-additional-options')
 
-router.route('create-additional-options').command('next', async (ctx) => {
+createAdditionalOptionsRoute.command('next', async (ctx) => {
     // TODO: Validate
     const santa = new SantaModel({
         chat: ctx.session.chatId,
         creator: ctx.chatId,
         name: ctx.session.name,
-        status: 'not-started',
+        status: 'not_started',
         deadlineDate: ctx.session.deadlineDate,
         selectDate: ctx.session.selectDate,
         startDate: ctx.session.startDate,
@@ -416,6 +404,20 @@ router.route('create-additional-options').command('next', async (ctx) => {
         })
     )
     ctx.session.state = 'start'
+})
+
+createAdditionalOptionsRoute.command('auto_accept', async (ctx) => {
+    ctx.session.options?.set(
+        'auto_accept',
+        !(ctx.session.options?.get('auto_accept') ?? false)
+    )
+    await ctx.reply(
+        ctx.t(`create-options-success`, {
+            options: Array.from(ctx.session.options?.entries() ?? [])
+                .flatMap(([k, v]) => (v ? [k] : []))
+                .join('\n'),
+        })
+    )
 })
 
 router.route('participate-info').on('message:text', async (ctx) => {
@@ -438,7 +440,7 @@ router.route('participate-options').command('next', async (ctx) => {
         santa: ctx.session.santaId,
         user: ctx.from!.id,
         info: ctx.session.infoId,
-        approved: isAutoAccept
+        status: isAutoAccept
             ? ParticipantStatus.APPROVED
             : ParticipantStatus.WAITING,
         options: ctx.session.options,
@@ -598,6 +600,7 @@ bot.use(router)
 const job = CronJob.from({
     cronTime: '0 * * * *',
     onTick: async () => {
+        console.log('Starting tick')
         try {
             const today = startOfToday()
             const yesterday = startOfYesterday()
@@ -617,6 +620,10 @@ const job = CronJob.from({
                 deadlineDate: { $lte: new Date() },
                 status: 'watching',
             })
+
+            console.log(started)
+            console.log(selected)
+            console.log(deadlined)
 
             for (const startedSanta of started) {
                 startedSanta.status = 'started'

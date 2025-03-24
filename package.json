@@ -1,5 +1,5 @@
 {
-  "name": "AnimeSecretSantabot",
+  "name": "anime-secret-santabot",
   "version": "0.1.0",
   "description": "Telegram bot for secret santa but for anime",
   "main": "src/index.ts",
