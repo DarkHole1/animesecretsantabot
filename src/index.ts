@@ -361,11 +361,26 @@ router.route('create-restrictions').on('message:text', async (ctx) => {
     await ctx.reply(ctx.t(`choose-create-options`))
     ctx.session.restrictions = restrictions
     ctx.session.state = 'create-additional-options'
+    ctx.session.options = new Map()
 })
 
+router
+    .route('create-additional-options')
+    .command('auto_accept', async (ctx) => {
+        ctx.session.options?.set(
+            'auto_accept',
+            !(ctx.session.options?.get('auto_accept') ?? false)
+        )
+        await ctx.reply(
+            ctx.t(`create-options-success`, {
+                options: Array.from(ctx.session.options?.entries() ?? [])
+                    .flatMap(([k, v]) => (v ? [k] : []))
+                    .join('\n'),
+            })
+        )
+    })
+
 router.route('create-additional-options').command('next', async (ctx) => {
-    // TODO: Add parsing options
-    ctx.session.options = new Map()
     // TODO: Validate
     const santa = new SantaModel({
         chat: ctx.session.chatId,
@@ -404,40 +419,51 @@ router.route('participate-options').command('next', async (ctx) => {
         ctx.session.state = 'start'
         return
     }
+    const isAutoAccept = santa.options.get('auto_accept') ?? false
     const participant = new ParticipantModel({
         santa: ctx.session.santaId,
         user: ctx.from!.id,
         info: ctx.session.infoId,
-        approved: ParticipantStatus.WAITING,
+        approved: isAutoAccept
+            ? ParticipantStatus.APPROVED
+            : ParticipantStatus.WAITING,
         options: ctx.session.options,
     })
     await participant.save()
-    await ctx.api.sendMessage(
-        santa.creator,
-        ctx.t(`new-request`, {
-            name: [ctx.from!.first_name, ctx.from!.last_name]
-                .filter(Boolean)
-                .join(' '),
-            username: `@${ctx.from!.username}`,
-        }),
-        {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        {
-                            text: ctx.t(`new-request.accept`),
-                            callback_data: `accept:${santa.id}:${ctx.from!.id}`,
-                        },
-                        {
-                            text: ctx.t(`new-request.reject`),
-                            callback_data: `reject:${santa.id}:${ctx.from!.id}`,
-                        },
+    if (isAutoAccept) {
+        await ctx.reply(ctx.t(`request-answer`, { status: 'accept' }))
+    } else {
+        await ctx.api.sendMessage(
+            santa.creator,
+            ctx.t(`new-request`, {
+                name: [ctx.from!.first_name, ctx.from!.last_name]
+                    .filter(Boolean)
+                    .join(' '),
+                username: `@${ctx.from!.username}`,
+            }),
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: ctx.t(`new-request.accept`),
+                                callback_data: `accept:${santa.id}:${
+                                    ctx.from!.id
+                                }`,
+                            },
+                            {
+                                text: ctx.t(`new-request.reject`),
+                                callback_data: `reject:${santa.id}:${
+                                    ctx.from!.id
+                                }`,
+                            },
+                        ],
                     ],
-                ],
-            },
-        }
-    )
-    await ctx.reply(ctx.t(`request-sent`))
+                },
+            }
+        )
+        await ctx.reply(ctx.t(`request-sent`))
+    }
     ctx.session.state = 'start'
 })
 
@@ -561,15 +587,15 @@ const job = CronJob.from({
         try {
             const today = startOfToday()
             const yesterday = startOfYesterday()
-            const started = await SantaModel.find({ 
-                startDate: { $lte: new Date() }, 
-                status: 'not-started' 
+            const started = await SantaModel.find({
+                startDate: { $lte: new Date() },
+                status: 'not-started',
             })
             // TODO: Add reminders
             const selectedReminder = await SantaModel.find({
                 selectDate: yesterday, // WTF maybe tomorrow?
             })
-            const selected = await SantaModel.find({ 
+            const selected = await SantaModel.find({
                 selectDate: { $lte: new Date() },
                 status: 'started',
             })
@@ -599,7 +625,10 @@ const job = CronJob.from({
                 const pairing = new Map<string, string>()
                 for (let i = 0; i < shuffledParticipants.length; i++) {
                     const current = shuffledParticipants[i]
-                    const next = shuffledParticipants[(i + 1) % shuffledParticipants.length]
+                    const next =
+                        shuffledParticipants[
+                            (i + 1) % shuffledParticipants.length
+                        ]
                     pairing.set(current.id!.toString(), next.id!.toString())
                 }
                 startedSanta.pairing = pairing
@@ -688,7 +717,10 @@ const job = CronJob.from({
             }
         } catch (e) {
             console.log(e)
-            await bot.api.sendMessage(superAdminId, i18n.t(`ru`, `general-error`))
+            await bot.api.sendMessage(
+                superAdminId,
+                i18n.t(`ru`, `general-error`)
+            )
         }
     },
 })
