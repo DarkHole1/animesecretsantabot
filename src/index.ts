@@ -257,23 +257,18 @@ router.route('create-name').on('message:text', async (ctx) => {
 })
 
 router.route('create-start-date').on('message:text', async (ctx) => {
-    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    const res = parse(ctx.msg.text, `dd.MM.yyyy HH:mm`, new Date())
     if (isNaN(res.valueOf())) {
         await ctx.reply(ctx.t(`parse-date-error`))
         return
     }
-    const diff = differenceInDays(res, new Date())
-    // if (diff < 2 || diff > 31) {
-    //     await ctx.reply(ctx.t(`invalid-date-error`))
-    //     return
-    // }
     await ctx.reply(ctx.t(`choose-select-date`))
     ctx.session.startDate = res
     ctx.session.state = 'create-select-date'
 })
 
 router.route('create-select-date').on('message:text', async (ctx) => {
-    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    const res = parse(ctx.msg.text, `dd.MM.yyyy HH:mm`, new Date())
     if (isNaN(res.valueOf())) {
         await ctx.reply(ctx.t(`parse-date-error`))
         return
@@ -284,18 +279,13 @@ router.route('create-select-date').on('message:text', async (ctx) => {
         ctx.session.state = 'create-start-date'
         return
     }
-    const diff = differenceInDays(res, ctx.session.startDate)
-    if (diff < 2 || diff > 31) {
-        await ctx.reply(ctx.t(`invalid-date-error`))
-        return
-    }
     await ctx.reply(ctx.t(`choose-deadline-date`))
     ctx.session.selectDate = res
     ctx.session.state = 'create-deadline-date'
 })
 
 router.route('create-deadline-date').on('message:text', async (ctx) => {
-    const res = parse(ctx.msg.text, `dd.MM.yyyy`, new Date())
+    const res = parse(ctx.msg.text, `dd.MM.yyyy HH:mm`, new Date())
     if (isNaN(res.valueOf())) {
         await ctx.reply(ctx.t(`parse-date-error`))
         return
