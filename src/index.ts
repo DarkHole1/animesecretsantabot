@@ -606,7 +606,7 @@ const job = CronJob.from({
             const yesterday = startOfYesterday()
             const started = await SantaModel.find({
                 startDate: { $lte: new Date() },
-                status: 'not-started',
+                status: 'not_started',
             })
             // TODO: Add reminders
             const selectedReminder = await SantaModel.find({
